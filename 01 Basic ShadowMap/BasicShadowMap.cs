@@ -38,6 +38,7 @@ public class BasicShadowMap : MonoBehaviour
     private void SetFitToScene(Camera lightCamera)
     {
         List<Vector3> sceneBoundVertexs = BoundVertexsDetector.GetSceneBoundVertexs(sceneAABB);
+        list = sceneBoundVertexs;
         SetLightCameraFrustum.SetFitToScene(lightCamera, gameObject, sceneBoundVertexs);
     }
 
@@ -48,5 +49,15 @@ public class BasicShadowMap : MonoBehaviour
         SetLightCameraFrustum.SetFitToView(lightCamera, gameObject, sceneBoundVertexs, viewBoundVertexs);
     }
 
+    private List<Vector3> list;
 
+    private void OnDrawGizmos()
+    {
+        if(!Application.isPlaying) return;
+        foreach (var pos in list)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(pos,0.2f);
+        }
+    }
 }
