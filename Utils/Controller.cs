@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using ShadowMap;
+using UnityEngine;
 
 class Controller : MonoBehaviour
 {
@@ -6,18 +7,32 @@ class Controller : MonoBehaviour
     public Material ShadowMaterial;
     public Texture tex;
     public GameObject sceneAABB;
-    public Light light;
+    public Light sceneLight;
+    public FrustumType frustumType;
+
+    // For Render
+    public RenderTexture depthShadowMap;
+    public Shader depthCaptureShader;
 
     void Start()
     {
-        if (light != null)
+        if (sceneLight != null)
         {
+            var lightController = sceneLight.GetComponent<BasicShadowMap>();
+            lightController.Init();
+
+            Execute();
         }
     }
 
     void Update()
     {
         
+    }
+
+    private void Execute()
+    {
+
     }
 }
 

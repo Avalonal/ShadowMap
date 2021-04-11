@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Assets._01_Basic_ShadowMap.Helper;
 using UnityEngine;
 
 public static class SetProjectionMatrix
@@ -20,6 +21,7 @@ public static class SetProjectionMatrix
 
         Matrix4x4 m = posToUV * projection * worldToView;
         Shader.SetGlobalMatrix(name, m);
+        CommonValues.lightProjection = m;
     }
 
 

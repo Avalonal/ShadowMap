@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Assets._01_Basic_ShadowMap.Helper;
 
 public static class CreateCamera {
 
@@ -21,6 +22,7 @@ public static class CreateCamera {
 
 
         Shader.SetGlobalTexture("_ShadowDepthMap", rt);
+        CommonValues.shadowDepthMap = rt;
 
         return camera;
     }

@@ -1,50 +1,55 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Assets._01_Basic_ShadowMap.Helper;
 using ShadowMap;
+using UnityEditor;
 
 public class BasicShadowMap : MonoBehaviour
 {
 
-    public GameObject sceneAABB;
+    public GameObject _sceneAABB;
 
-    public FrustumType frustumType;
+    public FrustumType _frustumType;
 
     // For Render
-    public RenderTexture depthShadowMap;
-    public Shader depthCaptureShader;
-
-
+    public RenderTexture _depthShadowMap;
+    public Shader _depthCaptureShader;
 
     // Use this for initialization
     void Start()
     {
-        Camera lightCamera = CreateCamera.Execute(gameObject, depthShadowMap);
-        Camera viewCamera  = Camera.main;
-        if (frustumType == FrustumType.FIT_TO_SCENE)
+    }
+
+    public void Init()
+    {
+        Camera lightCamera = CameraExecute(gameObject, _depthShadowMap);
+        Camera viewCamera = Camera.main;
+        if (_frustumType == FrustumType.FIT_TO_SCENE)
         {
             SetFitToScene(lightCamera);
-        } else
+        }
+        else
         {
             SetFitToView(lightCamera, viewCamera);
         }
 
-        CaptureDepth depthCapturer = lightCamera.gameObject.AddComponent<CaptureDepth>();
-        depthCapturer.SetCaptureShader(depthCaptureShader);
+        lightCamera.RenderWithShader(_depthCaptureShader,"RenderType");
+        CommonValues.depthCaptureShader = _depthCaptureShader;
 
         SetProjectionMatrix.Execute(lightCamera);
     }
 
     private void SetFitToScene(Camera lightCamera)
     {
-        List<Vector3> sceneBoundVertexs = BoundVertexsDetector.GetSceneBoundVertexs(sceneAABB);
+        List<Vector3> sceneBoundVertexs = BoundVertexsDetector.GetSceneBoundVertexs(_sceneAABB);
         list = sceneBoundVertexs;
         SetLightCameraFrustum.SetFitToScene(lightCamera, gameObject, sceneBoundVertexs);
     }
 
     private void SetFitToView(Camera lightCamera, Camera viewCamera)
     {
-        List<Vector3> sceneBoundVertexs = BoundVertexsDetector.GetSceneBoundVertexs(sceneAABB);
+        List<Vector3> sceneBoundVertexs = BoundVertexsDetector.GetSceneBoundVertexs(_sceneAABB);
         List<Vector3> viewBoundVertexs = BoundVertexsDetector.GetPerspectiveCameraFrustumVertexs(viewCamera);
         SetLightCameraFrustum.SetFitToView(lightCamera, gameObject, sceneBoundVertexs, viewBoundVertexs);
     }
@@ -53,11 +58,34 @@ public class BasicShadowMap : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        if(!Application.isPlaying) return;
+        if(list == null) return;
         foreach (var pos in list)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(pos,0.2f);
+            Gizmos.DrawWireSphere(pos,2.0f);
         }
+    }
+
+    public static Camera CameraExecute(GameObject parentLight, RenderTexture rt)
+    {
+        GameObject cameraObject = new GameObject();
+        cameraObject.name = "Light Camera";
+        cameraObject.transform.SetParent(parentLight.transform);
+        cameraObject.transform.localPosition = Vector3.zero;
+        cameraObject.transform.localRotation = Quaternion.identity;
+
+        Camera camera = cameraObject.AddComponent<Camera>();
+        camera.targetTexture = rt;
+        camera.clearFlags = CameraClearFlags.Color;
+        camera.backgroundColor = Color.black;
+        camera.orthographic = true;
+
+        camera.enabled = false;
+
+
+        Shader.SetGlobalTexture("_ShadowDepthMap", rt);
+        CommonValues.shadowDepthMap = rt;
+
+        return camera;
     }
 }
