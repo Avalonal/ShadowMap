@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using NUnit.Framework.Internal.Execution;
 using UnityEngine;
 
 namespace Assets._01_Basic_ShadowMap.Helper
@@ -12,27 +12,52 @@ namespace Assets._01_Basic_ShadowMap.Helper
         public static Shader depthCaptureShader;
         public static Matrix4x4 lightProjection;
         public static RenderTexture shadowDepthMap;
-        private static Texture2D shadowDepthTexture2D;
+        public static Texture2D shadowDepthTexture2D;
 
-        public static bool GetShadowState(Vector3 pos)
+        public static float pixelWidth;
+        public static float pixelHeight;
+        public static float bias;
+
+        public static float GetShadowState(Vector3 pos)
         {
             Vector3 posInLight = new Vector3();
             float depth = GetDepth(pos, lightProjection, shadowDepthMap, out posInLight);
-            return posInLight.z > depth;
+            //float strength = GetShadowAttenuate(posInLight, shadowDepthMap, bias, pixelWidth, pixelHeight);
+            //Debug.LogFormat("{0}=>{1}", posInLight.z,depth);
+            return posInLight.z <= depth ? 0.0f : 1.0f;
         }
 
-        //public static float GetDepthWithPcf(Vector3 worldPos, Matrix4x4 lightTrans, RenderTexture depthMap,
-        //    out Vector3 posInLight)
-        //{
-            
-        //}
-        public static float GetDepth(Vector3 worldPos, Matrix4x4 lightTrans, RenderTexture depthMap, out Vector3 posInLight)
+        private static float GetNearDepth(Vector3 pos, float bias, RenderTexture depthMap, float offsetX, float offsetY, float fator)
+        {
+            if (shadowDepthTexture2D == null)
+                shadowDepthTexture2D = toTexture2D(depthMap);
+            Color enc = shadowDepthTexture2D.GetPixelBilinear(pos.x + offsetX, pos.y + offsetY);
+            return (pos.z - bias > DecodeFloatRGBA(enc)) ? fator : 0;
+        }
+
+        private static float GetShadowAttenuate(Vector3 pos, RenderTexture depthMap, float bias, float pixelWidth, float pixelHeight)
+        {
+            float atten = 0;
+            int i = 0;
+            int j = 0;
+
+            //float[] factors = {0.1, 0.2, 0.4, 0.2, 0.1}; // 1.0 combined
+            for (i = -2; i <= 2; i++)
+            for (j = -2; j <= 2; j++)
+                atten += GetNearDepth(pos, bias, depthMap, i * pixelWidth, j * pixelHeight, 1);// factors[i + 2] * factors[j + 2]);
+            atten = atten / 25;
+            return atten;
+        }
+
+        private static float GetDepth(Vector3 worldPos, Matrix4x4 lightTrans, RenderTexture depthMap, out Vector3 posInLight)
         {
             posInLight = (lightTrans * (new Vector4(worldPos.x, worldPos.y, worldPos.z, 1)));
+            //Debug.LogFormat("{0} <=> {1}",worldPos,posInLight);
             if (shadowDepthTexture2D == null)
-                shadowDepthTexture2D = Rt2T(shadowDepthMap);
+                shadowDepthTexture2D = toTexture2D(depthMap);
             Color enc = shadowDepthTexture2D.GetPixelBilinear(posInLight.x, posInLight.y);
-            return DecodeFloatRGBA(new Vector4(enc.r,enc.g,enc.b,enc.a));
+            Debug.Log(enc);
+            return DecodeFloatRGBA(enc);
         }
 
         //public static Vector4 EncodeFloatRGBA(float v)
@@ -45,9 +70,9 @@ namespace Assets._01_Basic_ShadowMap.Helper
         //    return enc;
         //}
 
-        public static float DecodeFloatRGBA(Vector4 enc)
+        private static float DecodeFloatRGBA(Vector4 enc)
         {
-            Vector4 kDecodeDot = new Vector4(1.0f, 1 / 255.0f, 1 / 65025.0f, 1 / 160581375.0f);
+            Vector4 kDecodeDot = new Vector4(1.0f, 1.0f / 255.0f, 1.0f / 65025.0f, 1.0f / 16581375.0f);
             return dot(enc, kDecodeDot);
         }
 
@@ -56,13 +81,15 @@ namespace Assets._01_Basic_ShadowMap.Helper
             return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
         }
 
-        private static Texture2D Rt2T(RenderTexture rt)
+        private static Texture2D toTexture2D(RenderTexture renderTexture)
         {
-            Texture2D tex = new Texture2D(rt.width, rt.height);
-            tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
-            tex.Apply();
-            return tex;
+            Texture2D texDepth = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.ARGB32, false, true);
+            RenderTexture.active = renderTexture;
+            texDepth.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+            texDepth.Apply();
+            RenderTexture.active = null;
+            var colors = texDepth.GetPixels();
+            return texDepth;
         }
-
     }
 }

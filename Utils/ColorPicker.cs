@@ -81,10 +81,7 @@ public class ColorPicker : MonoBehaviour
     {
         m_grab = true;
         // Record the mouse position to pick pixel
-        m_pixelPosition = Camera.main.WorldToScreenPoint(obj.transform.position);
-        mousePos = obj.transform.position;
-        Debug.Log("pos = " + mousePos + "=>" + (CommonValues.GetShadowState(mousePos) ? "yes" : "no"));
-        Shader.SetGlobalColor("_MousePos",new Color(mousePos.x, mousePos.y, mousePos.z));
+        m_pixelPosition = Input.mousePosition;
     }
 
     void OnGUI()
@@ -95,14 +92,5 @@ public class ColorPicker : MonoBehaviour
         GUI.Label(new Rect(10, 140, 100, 20), "G: " + System.Math.Round((double)m_pickedColor.g, 4) + "\t(" + Mathf.FloorToInt(m_pickedColor.g * 255) + ")");
         GUI.Label(new Rect(10, 160, 100, 20), "B: " + System.Math.Round((double)m_pickedColor.b, 4) + "\t(" + Mathf.FloorToInt(m_pickedColor.b * 255) + ")");
         GUI.Label(new Rect(10, 180, 100, 20), "A: " + System.Math.Round((double)m_pickedColor.a, 4) + "\t(" + Mathf.FloorToInt(m_pickedColor.a * 255) + ")");
-    }
-
-    private Vector3 mousePos;
-    void OnDrawGizmos()
-    {
-        if(mousePos==Vector3.zero) return;
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(mousePos,0.5f);
-
     }
 }
