@@ -4,7 +4,6 @@
 
 		_slopeScaleDepthBias("Bias Sloop Scale", Range(0, 1)) = 0
 		_depthBias("depth bias", float) = 0.001
-		_bias("bias", float) = -0.001
 
 		_pixelWidth("pixel width", float) = 0.001
 		_pixelHeight("pixel height", float) = 0.001
@@ -38,7 +37,6 @@
 		// For ShadowBias
 		float _slopeScaleDepthBias;
 		float _depthBias;
-		float _bias;
 
 		// For PCF
 		float _pixelWidth;
@@ -47,32 +45,15 @@
 		float GetShadowAtten(float3 worldPos, float3 worldNormal) {
 			float3 posInLight;
 			float shadowDepth = GetDepth(worldPos, _LightProjection, _ShadowDepthMap, posInLight);
-			//float bias = GetShadowBias(worldNormal, _LightProjection, _slopeScaleDepthBias, _depthBias / 100000);
-			float strength = GetShadowAttenuate(posInLight, _ShadowDepthMap, _bias, _pixelWidth, _pixelHeight);
-			//if (shadowDepth < posInLight.z) {
-			//	_Color = fixed4(1, 0, 0, 1);
-			//}
-			//else if (shadowDepth == posInLight.z) {
-			//	_Color = fixed4(0, 1, 0, 1);
-			//}
-			//else {
-			//	_Color = fixed4(0, 0, 1, 1);
-			//}
-			/*if (strength <= 0) {
-				_Color = fixed4(1, 0, 0, 1);
-			}
-			else if (strength < 0.5) {
-				_Color = fixed4(0, 1, 0, 1);
-			}
-			else {
-				_Color = fixed4(0, 0, 1, 1);
-			}*/
+			float bias = GetShadowBias(worldNormal, _LightProjection, _slopeScaleDepthBias, _depthBias / 100000);
+
+			float strength = GetShadowAttenuate(posInLight, _ShadowDepthMap, bias, _pixelWidth, _pixelHeight);
 			return strength;
 		}
 
+
 		void surf(Input IN, inout SurfaceOutputStandard o) {
 			o.Albedo = _Color * GetShadowAtten(IN.worldPos, IN.worldNormal);
-			//o.Albedo = _Color;
 			o.Alpha = 1;
 		}
 		ENDCG

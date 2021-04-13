@@ -13,6 +13,5 @@ inline float SelfDecode( float4 enc )
 
 inline float GetDepth(float3 worldPos, float4x4 lightTrans, sampler2D depthMap, out float3 posInLight) {
     posInLight = mul(lightTrans, float4(worldPos, 1)).xyz;
-    return SelfDecode(tex2D(depthMap, posInLight.xy));
-    //DecodeFloatRGBA(tex2D(depthMap, posInLight.xy));
+    return DecodeFloatRGBA(tex2D(depthMap, posInLight.xy));
 }

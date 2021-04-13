@@ -25,6 +25,16 @@ namespace Assets.ShadowCSharp
 
         }
 
+        public float GetAABBLenth()
+        {
+            return maxVector[0] - minVector[0];
+        }
+
+        public Vector3 BasePoint
+        {
+            get { return minVector; }
+        }
+
         public void DoActionForEachPoint(Action<Vector3> action,float step)
         {
             for (float x = minVector.x; x <= maxVector.x; x += step)

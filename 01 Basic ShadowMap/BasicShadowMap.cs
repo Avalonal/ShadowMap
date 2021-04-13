@@ -33,7 +33,7 @@ public class BasicShadowMap : MonoBehaviour
         {
             SetFitToView(lightCamera, viewCamera);
         }
-
+        
         lightCamera.RenderWithShader(_depthCaptureShader,"RenderType");
         CommonValues.depthCaptureShader = _depthCaptureShader;
 
@@ -66,7 +66,7 @@ public class BasicShadowMap : MonoBehaviour
         }
     }
 
-    public static Camera CameraExecute(GameObject parentLight, RenderTexture rt)
+    public Camera CameraExecute(GameObject parentLight, RenderTexture rt)
     {
         GameObject cameraObject = new GameObject();
         cameraObject.name = "Light Camera";
@@ -85,7 +85,6 @@ public class BasicShadowMap : MonoBehaviour
 
         Shader.SetGlobalTexture("_ShadowDepthMap", rt);
         CommonValues.shadowDepthMap = rt;
-
         return camera;
     }
 }

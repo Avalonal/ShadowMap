@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework.Internal.Execution;
+using UnityEditor;
 using UnityEngine;
 
 namespace Assets._01_Basic_ShadowMap.Helper
@@ -56,7 +57,7 @@ namespace Assets._01_Basic_ShadowMap.Helper
             if (shadowDepthTexture2D == null)
                 shadowDepthTexture2D = toTexture2D(depthMap);
             Color enc = shadowDepthTexture2D.GetPixelBilinear(posInLight.x, posInLight.y);
-            Debug.Log(enc);
+            //Debug.Log(enc);
             return DecodeFloatRGBA(enc);
         }
 
@@ -83,12 +84,16 @@ namespace Assets._01_Basic_ShadowMap.Helper
 
         private static Texture2D toTexture2D(RenderTexture renderTexture)
         {
-            Texture2D texDepth = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.ARGB32, false, true);
+            Texture2D texDepth = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.RGBA32, false, true);
             RenderTexture.active = renderTexture;
             texDepth.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
             texDepth.Apply();
             RenderTexture.active = null;
-            var colors = texDepth.GetPixels();
+            var png = texDepth.EncodeToPNG();
+            string path = AssetDatabase.GetAssetPath(renderTexture) + ".png";
+            System.IO.File.WriteAllBytes(path, png);
+            AssetDatabase.ImportAsset(path);
+            Debug.Log("Saved to " + path);
             return texDepth;
         }
     }

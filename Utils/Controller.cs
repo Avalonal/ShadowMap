@@ -8,24 +8,20 @@ using UnityEngine;
 
 class Controller : MonoBehaviour
 {
-    public bool createTreeToggle;
-    public Material ShadowMaterial;
-    public Texture tex;
     public GameObject sceneAABB;
     public Light sceneLight;
-    public FrustumType frustumType;
 
-    // For Render
-    public RenderTexture depthShadowMap;
-    public Shader depthCaptureShader;
-
-    public float bias;
-    public float pixelWidth;
-    public float pixelHeight;
+    public float bias = 0;
+    public float pixelWidth = 0;
+    public float pixelHeight = 0;
+    public float step = 1f;
+    public int depth = 1;
 
     public AABBManager aabbManager;
-    public Mesh sphere;
-    private List<Vector3> list;
+
+    private OctreeManager octreeManager;
+    private List<DebugShadowData> list;
+    private Octree root;
 
     void Start()
     {
@@ -48,7 +44,9 @@ class Controller : MonoBehaviour
             Execute();
         }
         InitSystem();
-        aabbManager.DoActionForEachPoint(CreateMesh, 1f);
+
+        list = octreeManager.GetDebugShadowDatas();
+        //aabbManager.DoActionForEachPoint(CreateMesh, step);
     }
 
     private void Execute()
@@ -66,23 +64,27 @@ class Controller : MonoBehaviour
     private void InitSystem()
     {
         aabbManager = new AABBManager(sceneAABB);
-        list = new List<Vector3>();
+        octreeManager = new OctreeManager(aabbManager, depth);
+        root = octreeManager.BuildTree();
     }
 
-    private void CreateMesh(Vector3 pos)
-    {
-        list.Add(pos);
-    }
+    //private void CreateMesh(Vector3 pos)
+    //{
+    //    list.Add(pos);
+    //}
 
     void OnDrawGizmos()
     {
         if(list==null) return;
-        foreach (var pos in list)
+        foreach (var item in list)
         {
-            if(pos.y > 1) continue;
+            var pos = item.pos;
+            var size = item.size;
             var strength = CommonValues.GetShadowState(pos);
-            if(strength>0.8) continue;
-            Gizmos.DrawSphere(pos, 0.05f);
+            if(strength>0.3) continue;
+            //if(Physics.CheckSphere(pos,size*0.5f)) continue;
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireCube(pos, size * Vector3.one);
         }
     }
 }
