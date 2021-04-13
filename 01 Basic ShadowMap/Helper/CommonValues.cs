@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NUnit.Framework.Internal.Execution;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 namespace Assets._01_Basic_ShadowMap.Helper
