@@ -16,8 +16,6 @@ public class ColorPicker : MonoBehaviour
     private static Vector3 m_pixelPosition = Vector3.zero;
     private Color m_pickedColor = Color.white;
 
-    public GameObject obj;
-
     void Awake()
     {
         // Get the Camera component

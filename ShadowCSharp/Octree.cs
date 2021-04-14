@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Assets.ShadowCSharp
 {
@@ -9,10 +7,13 @@ namespace Assets.ShadowCSharp
     {
         private List<Octree> _subtree;
         private bool _inshadow;
+        private bool _isCull;
+
         public Octree()
         {
             _subtree = new List<Octree>(8);
             _inshadow = false;
+            _isCull = false;
         }
 
         public bool InShadow
@@ -27,22 +28,12 @@ namespace Assets.ShadowCSharp
             set { _subtree = value; }
         }
 
-        public bool CheckMerge()
+        public bool IsCull
         {
-            if (_subtree == null || _subtree.Count <= 0)
-                return true;
-            
-            for (int i = 0; i < 8; ++i)
-            {
-                bool subShadow = _subtree[i].InShadow;
-                if (!_subtree[i].CheckMerge())
-                    return false;
-                if (i == 0) _inshadow = subShadow;
-                else if (subShadow != _inshadow) return false;
-            }
-            _subtree.Clear();
-            return true;
+            get { return _isCull; }
+            set { _isCull = value; }
         }
+
     }
 }
 

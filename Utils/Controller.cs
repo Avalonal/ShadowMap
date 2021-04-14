@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
+﻿using System.Collections;
 using Assets._01_Basic_ShadowMap.Helper;
 using Assets.ShadowCSharp;
-using ShadowMap;
+using System.Collections.Generic;
 using UnityEngine;
+using System;
+using Random = UnityEngine.Random;
 
 class Controller : MonoBehaviour
 {
@@ -14,10 +14,13 @@ class Controller : MonoBehaviour
     public float bias = 0;
     public float pixelWidth = 0;
     public float pixelHeight = 0;
-    public float step = 1f;
     public int depth = 1;
 
+    public bool physicsTest = true;
+    public bool debugToggle = false;
+
     public AABBManager aabbManager;
+    public List<Color> colors = new List<Color> { Color.green, Color.blue, Color.red, Color.yellow, Color.black, Color.cyan };
 
     private OctreeManager octreeManager;
     private List<DebugShadowData> list;
@@ -26,11 +29,6 @@ class Controller : MonoBehaviour
     void Start()
     {
         Init();
-    }
-
-    void Update()
-    {
-        
     }
 
     private void Init()
@@ -45,8 +43,8 @@ class Controller : MonoBehaviour
         }
         InitSystem();
 
-        list = octreeManager.GetDebugShadowDatas();
-        //aabbManager.DoActionForEachPoint(CreateMesh, step);
+        if(debugToggle)
+            StartCoroutine(GetDebugList());
     }
 
     private void Execute()
@@ -64,14 +62,17 @@ class Controller : MonoBehaviour
     private void InitSystem()
     {
         aabbManager = new AABBManager(sceneAABB);
-        octreeManager = new OctreeManager(aabbManager, depth);
-        root = octreeManager.BuildTree();
+        octreeManager = new OctreeManager(aabbManager, depth,physicsTest);
+        octreeManager.BuildTree();
+        StartCoroutine(octreeManager.TrueBuildTree());
     }
 
-    //private void CreateMesh(Vector3 pos)
-    //{
-    //    list.Add(pos);
-    //}
+    IEnumerator GetDebugList()
+    {
+        list = octreeManager.GetDebugShadowDatas();
+        Debug.Log("Get Debug List Finished!");
+        yield return 0;
+    }
 
     void OnDrawGizmos()
     {
@@ -80,12 +81,18 @@ class Controller : MonoBehaviour
         {
             var pos = item.pos;
             var size = item.size;
+            var depth = item.depth;
             var strength = CommonValues.GetShadowState(pos);
             if(strength>0.3) continue;
-            //if(Physics.CheckSphere(pos,size*0.5f)) continue;
-            Gizmos.color = Color.red;
+            Gizmos.color = GetColorBySize(depth);
+            //Gizmos.DrawSphere(pos,size*0.2f);
             Gizmos.DrawWireCube(pos, size * Vector3.one);
         }
+    }
+
+    private Color GetColorBySize(int dep)
+    {
+        return colors[(depth-dep) % colors.Count];
     }
 }
 

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NUnit.Framework.Internal.Execution;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -23,9 +19,10 @@ namespace Assets._01_Basic_ShadowMap.Helper
         {
             Vector3 posInLight = new Vector3();
             float depth = GetDepth(pos, lightProjection, shadowDepthMap, out posInLight);
-            //float strength = GetShadowAttenuate(posInLight, shadowDepthMap, bias, pixelWidth, pixelHeight);
+            float strength = GetShadowAttenuate(posInLight, shadowDepthMap, bias, pixelWidth, pixelHeight);
             //Debug.LogFormat("{0}=>{1}", posInLight.z,depth);
-            return posInLight.z <= depth ? 0.0f : 1.0f;
+            //return posInLight.z <= depth ? 0.0f : 1.0f;
+            return strength;
         }
 
         private static float GetNearDepth(Vector3 pos, float bias, RenderTexture depthMap, float offsetX, float offsetY, float fator)

@@ -10,11 +10,13 @@ namespace Assets.ShadowCSharp
     {
         public Vector3 pos;
         public float size;
+        public int depth;
 
-        public DebugShadowData(Vector3 p, float s)
+        public DebugShadowData(Vector3 p, float s,int dep)
         {
             pos = p;
             size = s;
+            depth = dep;
         }
     }
 }
