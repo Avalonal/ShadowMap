@@ -4,6 +4,7 @@ using Assets.ShadowCSharp;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Threading;
 using Random = UnityEngine.Random;
 
 class Controller : MonoBehaviour
@@ -38,17 +39,23 @@ class Controller : MonoBehaviour
         {
             var lightController = sceneLight.GetComponent<BasicShadowMap>();
             lightController.Init();
-
-            Execute();
         }
         InitSystem();
-
-        if(debugToggle)
+        //Execute();
+        if (debugToggle)
             StartCoroutine(GetDebugList());
     }
 
     private void Execute()
     {
+        ThreadStart childRef = new ThreadStart(OcTreeExecute);
+        Thread childThread = new Thread(childRef);
+        childThread.Start();
+    }
+
+    private void OcTreeExecute()
+    {
+        octreeManager.TrueBuildTree();
 
     }
 
@@ -63,7 +70,6 @@ class Controller : MonoBehaviour
     {
         aabbManager = new AABBManager(sceneAABB);
         octreeManager = new OctreeManager(aabbManager, depth,physicsTest);
-        octreeManager.BuildTree();
         StartCoroutine(octreeManager.TrueBuildTree());
     }
 
