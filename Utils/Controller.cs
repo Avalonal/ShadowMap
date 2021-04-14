@@ -17,7 +17,6 @@ class Controller : MonoBehaviour
     public float pixelHeight = 0;
     public int depth = 1;
 
-    public bool physicsTest = true;
     public bool debugToggle = false;
 
     public AABBManager aabbManager;
@@ -41,9 +40,9 @@ class Controller : MonoBehaviour
             lightController.Init();
         }
         InitSystem();
-        //Execute();
-        if (debugToggle)
-            StartCoroutine(GetDebugList());
+        StartCoroutine(octreeManager.TrueBuildTree());
+        GC.Collect();
+        Execute();
     }
 
     private void Execute()
@@ -55,8 +54,8 @@ class Controller : MonoBehaviour
 
     private void OcTreeExecute()
     {
-        octreeManager.TrueBuildTree();
-
+        if (debugToggle)
+            GetDebugList();
     }
 
     private void InitVariable()
@@ -68,16 +67,15 @@ class Controller : MonoBehaviour
 
     private void InitSystem()
     {
+        CommonValues.Init();
         aabbManager = new AABBManager(sceneAABB);
-        octreeManager = new OctreeManager(aabbManager, depth,physicsTest);
-        StartCoroutine(octreeManager.TrueBuildTree());
+        octreeManager = new OctreeManager(aabbManager, depth);
     }
 
-    IEnumerator GetDebugList()
+    private void GetDebugList()
     {
         list = octreeManager.GetDebugShadowDatas();
         Debug.Log("Get Debug List Finished!");
-        yield return 0;
     }
 
     void OnDrawGizmos()

@@ -25,6 +25,13 @@ namespace Assets._01_Basic_ShadowMap.Helper
             return strength;
         }
 
+        public static void Init()
+        {
+            if (shadowDepthTexture2D == null)
+                shadowDepthTexture2D = toTexture2D(shadowDepthMap);
+            Shader.SetGlobalTexture("_ShadowDepthMap", shadowDepthTexture2D);
+        }
+
         private static float GetNearDepth(Vector3 pos, float bias, RenderTexture depthMap, float offsetX, float offsetY, float fator)
         {
             if (shadowDepthTexture2D == null)
@@ -91,6 +98,8 @@ namespace Assets._01_Basic_ShadowMap.Helper
             System.IO.File.WriteAllBytes(path, png);
             AssetDatabase.ImportAsset(path);
             Debug.Log("Saved to " + path);
+            //Texture2D texDepth2 = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.RGBA32, false, true);
+            //texDepth2.LoadImage(png);
             return texDepth;
         }
     }

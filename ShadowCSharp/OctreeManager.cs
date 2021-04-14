@@ -13,13 +13,11 @@ namespace Assets.ShadowCSharp
         private Octree _root;
         private List<int> stk;
         private List<DebugShadowData> _shadowDatas;
-        private bool _physicsTest;
 
-        public OctreeManager(AABBManager aabbManager, int depth,bool physicsTest)
+        public OctreeManager(AABBManager aabbManager, int depth)
         {
             _depth = depth;
             _aabbManager = aabbManager;
-            _physicsTest = physicsTest;
             stk = new List<int>();
             Initializer();
         }
@@ -63,7 +61,6 @@ namespace Assets.ShadowCSharp
             {
                 var pos = GetWorldPositionByStack();
                 var size = GetSizeByDepth(stk.Count);
-                if (_physicsTest&&Physics.CheckBox(pos, size * 0.8f * Vector3.one)) return;
                 _shadowDatas.Add(new DebugShadowData(pos,size, stk.Count));
                 return;
             }
