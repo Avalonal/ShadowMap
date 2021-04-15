@@ -21,6 +21,7 @@ class Controller : MonoBehaviour
 
     public AABBManager aabbManager;
     public List<Color> colors = new List<Color> { Color.green, Color.blue, Color.red, Color.yellow, Color.black, Color.cyan };
+    public List<int> hashCode = new List<int> {17, 37, 71, 97, 113, 193, 233, 349};
 
     private OctreeManager octreeManager;
     private List<DebugShadowData> list;
@@ -69,7 +70,7 @@ class Controller : MonoBehaviour
     {
         CommonValues.Init();
         aabbManager = new AABBManager(sceneAABB);
-        octreeManager = new OctreeManager(aabbManager, depth);
+        octreeManager = new OctreeManager(aabbManager, depth, hashCode);
     }
 
     private void GetDebugList()

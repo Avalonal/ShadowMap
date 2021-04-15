@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using UnityEngine;
 
 namespace Assets.ShadowCSharp
 {
     class DepthManager
     {
+        private Texture2D depthTexture;
 
+        public DepthManager(Texture2D tex)
+        {
+
+        }
     }
 }

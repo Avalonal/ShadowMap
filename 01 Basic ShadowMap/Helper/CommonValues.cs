@@ -43,13 +43,9 @@ namespace Assets._01_Basic_ShadowMap.Helper
         private static float GetShadowAttenuate(Vector3 pos, RenderTexture depthMap, float bias, float pixelWidth, float pixelHeight)
         {
             float atten = 0;
-            int i = 0;
-            int j = 0;
-
-            //float[] factors = {0.1, 0.2, 0.4, 0.2, 0.1}; // 1.0 combined
-            for (i = -2; i <= 2; i++)
-            for (j = -2; j <= 2; j++)
-                atten += GetNearDepth(pos, bias, depthMap, i * pixelWidth, j * pixelHeight, 1);// factors[i + 2] * factors[j + 2]);
+            for (int i = -2; i <= 2; i++)
+            for (int j = -2; j <= 2; j++)
+                atten += GetNearDepth(pos, bias, depthMap, i * pixelWidth, j * pixelHeight, 1);
             atten = atten / 25;
             return atten;
         }
