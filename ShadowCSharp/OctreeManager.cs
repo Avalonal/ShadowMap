@@ -19,6 +19,9 @@ namespace Assets.ShadowCSharp
         private List<int> _primeList;
         private const int mod = (int) 1e9 + 7;
 
+        private Octree inshadowTree = new Octree(true);
+        private Octree outshadowTree = new Octree(false);
+
         public OctreeManager(AABBManager aabbManager, int depth, List<int> hashCode)
         {
             _depth = depth;
@@ -26,6 +29,7 @@ namespace Assets.ShadowCSharp
             _hashCode = hashCode;
 
             stk = new List<int>();
+   
             InitHashSystem();
             Initializer();
         }
@@ -69,6 +73,7 @@ namespace Assets.ShadowCSharp
             {
                 Build(_depth, out _root);
             }
+            Debug.Log("Dic size = " + _dic.Count);
         }
 
         public IEnumerator TrueBuildTree()
@@ -112,28 +117,35 @@ namespace Assets.ShadowCSharp
                 //Debug.Log(pos);
                 root.SubTree.Clear();
                 root.InShadow = (CommonValues.GetShadowState(pos) < 0.3f);
+                if (root.InShadow) root = inshadowTree;
+                else root = outshadowTree;
 
                 //return root;
                 return new KeyValuePair<int, int>(0,root.InShadow?1 : 0);
             }
 
             bool flag = true;
+
             int sz = 1;
             int hashval = 0;
+
             for (int i = 0; i < 8; ++i)
             {
                 stk.Add(i);
                 var pos = GetWorldPositionByStack();
                 Octree subTree;
-                Build(tmpDep - 1, out subTree);
+                var subVal = Build(tmpDep - 1, out subTree);
                 root.SubTree.Add(subTree);
                 bool isCull = false;
                 if (subTree.InShadow)
                 {
                     isCull = Physics.CheckSphere(pos, GetSizeByDepth(stk.Count) * 0.4f);
                 }
+
+                hashval = (hashval + _hashCode[i] * _primeList[subVal.Key] % mod * subVal.Value % mod) % mod;
+                sz += subVal.Key;
+
                 stk.RemoveAt(stk.Count - 1);
-                root.IsCull &= root.SubTree[i].IsCull;
                 if (flag)
                 {
                     if (root.SubTree[i].SubTree != null && root.SubTree[i].SubTree.Count > 0) flag = false;
@@ -148,9 +160,17 @@ namespace Assets.ShadowCSharp
             if (flag)
             {
                 root.SubTree.Clear();
+
+                if (root.InShadow) root = inshadowTree;
+                else root = outshadowTree;
+
                 return new KeyValuePair<int, int>(0, root.InShadow ? 1 : 0);
             }
-            //return root;
+
+            if (_dic.ContainsKey(hashval)) root = _dic[hashval];
+            else _dic.Add(hashval,root);
+
+            return new KeyValuePair<int, int>(sz,hashval);
         }
 
         private Vector3 GetWorldPositionByStack()

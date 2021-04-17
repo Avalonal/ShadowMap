@@ -44,6 +44,7 @@ class Controller : MonoBehaviour
         StartCoroutine(octreeManager.TrueBuildTree());
         GC.Collect();
         Execute();
+        GC.Collect();
     }
 
     private void Execute()
