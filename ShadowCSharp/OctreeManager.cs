@@ -2,7 +2,9 @@
 using System.Collections;
 using Assets._01_Basic_ShadowMap.Helper;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Assets.ShadowCSharp
 {
@@ -19,8 +21,8 @@ namespace Assets.ShadowCSharp
         private List<int> _primeList;
         private const int mod = (int) 1e9 + 7;
 
-        private Octree inshadowTree = new Octree(true);
-        private Octree outshadowTree = new Octree(false);
+        private Octree inshadowTree = new Octree(true,0);
+        private Octree outshadowTree = new Octree(false,1);
 
         public OctreeManager(AABBManager aabbManager, int depth, List<int> hashCode)
         {
@@ -32,6 +34,12 @@ namespace Assets.ShadowCSharp
    
             InitHashSystem();
             Initializer();
+
+            Texture2D tex = new Texture2D(2, 2);
+            Color32 col = EncodeIntRGBA(Int32.MaxValue);
+            SetPixel(0,tex,col);
+            col = tex.GetPixel(0, 0);
+            Debug.LogFormat("{0} => {1}",Int32.MaxValue,DecodeIntRGBA(col));
         }
 
         private void InitHashSystem()
@@ -117,8 +125,7 @@ namespace Assets.ShadowCSharp
                 //Debug.Log(pos);
                 root.SubTree.Clear();
                 root.InShadow = (CommonValues.GetShadowState(pos) < 0.3f);
-                if (root.InShadow) root = inshadowTree;
-                else root = outshadowTree;
+                root = root.InShadow ? inshadowTree : outshadowTree;
 
                 //return root;
                 return new KeyValuePair<int, int>(0,root.InShadow?1 : 0);
@@ -142,7 +149,7 @@ namespace Assets.ShadowCSharp
                     isCull = Physics.CheckSphere(pos, GetSizeByDepth(stk.Count) * 0.4f);
                 }
 
-                hashval = (hashval + _hashCode[i] * _primeList[subVal.Key] % mod * subVal.Value % mod) % mod;
+                hashval = (hashval + _hashCode[i] * _primeList[subVal.Key] % mod * subVal.Value % mod) % mod ;
                 sz += subVal.Key;
 
                 stk.RemoveAt(stk.Count - 1);
@@ -161,8 +168,7 @@ namespace Assets.ShadowCSharp
             {
                 root.SubTree.Clear();
 
-                if (root.InShadow) root = inshadowTree;
-                else root = outshadowTree;
+                root = root.InShadow ? inshadowTree : outshadowTree;
 
                 return new KeyValuePair<int, int>(0, root.InShadow ? 1 : 0);
             }
@@ -197,6 +203,65 @@ namespace Assets.ShadowCSharp
             }
 
             return worldPos;
+        }
+
+        private Texture2D SerializeOctree()
+        {
+            Texture2D tex = new Texture2D(1024, 1024);
+            SetPixel(0,tex,EncodeIntRGBA(1));
+            SetPixel(1,tex,EncodeIntRGBA(0));
+            SerializationDfs(_root, tex);
+            return tex;
+        }
+
+        private int SerializationDfs(Octree root,Texture2D tex)
+        {
+            if (root.Ip >= 0) return root.Ip;
+            root.Ip = ++lastIp;
+            SetPixel(root.Ip,tex,EncodeIntRGBA(SerializationDfs(root.SubTree[0],tex)));
+
+
+            return root.Ip;
+        }
+
+        private void SerializationBfs(Octree root, Texture2D tex,ref int lastIp)
+        {
+            Queue<Octree> q = new Queue<Octree>();
+            q.Enqueue(root);
+
+            while (q.Count > 0)
+            {
+                Octree top = q.Dequeue();
+                if (top.Ip >= 0)
+                {
+
+                }
+                top.Ip = ++las
+            }
+        }
+
+        private void SetPixel(int id, Texture2D tex,Color32 col)
+        {
+            tex.SetPixel(id / tex.width, id % tex.width,col);
+        }
+
+        private Color32 EncodeIntRGBA(int val)
+        {
+            var bytes = BitConverter.GetBytes(val);
+            Color32 col = new Color32 {r = bytes[0], g = bytes[1], b = bytes[2], a = bytes[3]};
+
+            return col;
+        }
+
+        private int DecodeIntRGBA(Color32 col)
+        {
+            byte[] bytes = new byte[4];
+            bytes[0] = col.r;
+            bytes[1] = col.g;
+            bytes[2] = col.b;
+            bytes[3] = col.a; 
+
+            return BitConverter.ToInt32(bytes,0);
         }
     }
 }

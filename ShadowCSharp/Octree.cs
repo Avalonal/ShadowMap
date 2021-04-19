@@ -7,17 +7,20 @@ namespace Assets.ShadowCSharp
     {
         private List<Octree> _subtree;
         private bool _inshadow;
+        private int _ip;
 
         public Octree()
         {
             _subtree = new List<Octree>(8);
             _inshadow = false;
+            _ip = -1;
         }
 
-        public Octree(bool shadow)
+        public Octree(bool shadow,int ip = -1)
         {
             _inshadow = shadow;
             _subtree = null;
+            _ip = ip;
         }
 
         public bool InShadow
@@ -32,6 +35,11 @@ namespace Assets.ShadowCSharp
             set { _subtree = value; }
         }
 
+        public int Ip
+        {
+            get { return _ip; }
+            set { _ip = value; }
+        }
     }
 }
 
