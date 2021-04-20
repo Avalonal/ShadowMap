@@ -41,10 +41,18 @@ class Controller : MonoBehaviour
             lightController.Init();
         }
         InitSystem();
+
         StartCoroutine(octreeManager.TrueBuildTree());
         GC.Collect();
         Execute();
         GC.Collect();
+        Texture2D tex = octreeManager.SerializeOctree();
+        Shader.SetGlobalTexture("_Octree",tex);
+        Shader.SetGlobalInt("_TreeDepth",depth);
+        Shader.SetGlobalVector("_AABBMin",aabbManager.BasePoint);
+        Shader.SetGlobalInt("_TexWidth",tex.width);
+        Shader.SetGlobalInt("_TexHeight",tex.height);
+        CommonValues.SaveTexture2DToLacalPng(tex, "Octree-preCompress");
     }
 
     private void Execute()

@@ -35,11 +35,11 @@ namespace Assets.ShadowCSharp
             InitHashSystem();
             Initializer();
 
-            Texture2D tex = new Texture2D(2, 2);
+            /*Texture2D tex = new Texture2D(2, 2);
             Color32 col = EncodeIntRGBA(Int32.MaxValue);
             SetPixel(0,tex,col);
             col = tex.GetPixel(0, 0);
-            Debug.LogFormat("{0} => {1}",Int32.MaxValue,DecodeIntRGBA(col));
+            Debug.LogFormat("{0} => {1}",Int32.MaxValue,DecodeIntRGBA(col));*/
         }
 
         private void InitHashSystem()
@@ -146,10 +146,10 @@ namespace Assets.ShadowCSharp
                 bool isCull = false;
                 if (subTree.InShadow)
                 {
-                    isCull = Physics.CheckSphere(pos, GetSizeByDepth(stk.Count) * 0.4f);
+                    isCull = Physics.CheckSphere(pos, GetSizeByDepth(stk.Count) * 0.49f);
                 }
 
-                hashval = (hashval + _hashCode[i] * _primeList[subVal.Key] % mod * subVal.Value % mod) % mod ;
+                hashval = (hashval + _hashCode[i] * _primeList[subVal.Key] % mod * subVal.Value % mod) % mod;
                 sz += subVal.Key;
 
                 stk.RemoveAt(stk.Count - 1);
@@ -205,49 +205,92 @@ namespace Assets.ShadowCSharp
             return worldPos;
         }
 
-        private Texture2D SerializeOctree()
+        public Texture2D SerializeOctree()
         {
             Texture2D tex = new Texture2D(1024, 1024);
-            SetPixel(0,tex,EncodeIntRGBA(1));
-            SetPixel(1,tex,EncodeIntRGBA(0));
-            SerializationDfs(_root, tex);
+            int lastIp = -1;
+            SerializationDfs(_root, tex,ref lastIp,0);
+            Debug.LogFormat("Total ip = {0}",lastIp);
             return tex;
         }
 
-        private int SerializationDfs(Octree root,Texture2D tex)
+        private const int black = Int32.MaxValue;
+        private const int white = 0;
+
+        private int SerializationDfs(Octree root, Texture2D tex,ref int lastIp,int preAllocatedId)
         {
-            if (root.Ip >= 0) return root.Ip;
-            root.Ip = ++lastIp;
-            SetPixel(root.Ip,tex,EncodeIntRGBA(SerializationDfs(root.SubTree[0],tex)));
+            if (root.SubTree == null || root.SubTree.Count <= 0)
+            {
+                return root.InShadow ? black : white;
+            }
+            if (root.Ip >= 0)
+            {
+                Color32 col;
+                GetPixel(root.Ip, tex,out col);
+                return DecodeIntRGBA(col);
+            }
 
+            root.Ip = preAllocatedId;
 
+            int TryCompressValue;
+            if (BitCompression(root, out TryCompressValue))
+            {
+                SetPixel(root.Ip,tex,EncodeIntRGBA(TryCompressValue,1));
+                return root.Ip;
+            }
+
+            int tmpIp = lastIp + 1;
+            lastIp += 8;
+
+            SetPixel(root.Ip, tex, EncodeIntRGBA(SerializationDfs(root.SubTree[0], tex, ref lastIp, tmpIp), 
+                (root.SubTree == null || root.SubTree.Count <= 0) ? 0 : 2));
+
+            for (int i = 1; i < 8; ++i)
+            {
+               SerializationDfs(root.SubTree[i],tex,ref lastIp,tmpIp+i);
+            }
             return root.Ip;
         }
 
-        private void SerializationBfs(Octree root, Texture2D tex,ref int lastIp)
+        private bool BitCompression(Octree root,out int val)
         {
-            Queue<Octree> q = new Queue<Octree>();
-            q.Enqueue(root);
-
-            while (q.Count > 0)
+            if (root == null || root.SubTree == null || root.SubTree.Count <= 0)
             {
-                Octree top = q.Dequeue();
-                if (top.Ip >= 0)
-                {
-
-                }
-                top.Ip = ++las
+                val = 0;
+                return false;
             }
+            bool flag = true;
+            val = 0;
+            for (int i = 0; i < 8; ++i)
+            {
+                if (root.SubTree[i].SubTree != null && root.SubTree[i].SubTree.Count > 0)
+                {
+                    val = 0;
+                    return false;
+                }
+                if(root.SubTree[i].InShadow)
+                    val += (1 << i);
+            }
+
+            return true;
         }
+
+        //private bool BitCompressionDouble(Octree root,out int val1,out int val2)
 
         private void SetPixel(int id, Texture2D tex,Color32 col)
         {
             tex.SetPixel(id / tex.width, id % tex.width,col);
         }
 
-        private Color32 EncodeIntRGBA(int val)
+        private void GetPixel(int id, Texture2D tex, out Color32 col)
+        {
+            col = tex.GetPixel(id / tex.width, id % tex.width);
+        }
+
+        private Color32 EncodeIntRGBA(int val,int type)
         {
             var bytes = BitConverter.GetBytes(val);
+            bytes[0] = (byte) ((bytes[0] & 0x3f) + (byte)(type << 6));
             Color32 col = new Color32 {r = bytes[0], g = bytes[1], b = bytes[2], a = bytes[3]};
 
             return col;

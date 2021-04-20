@@ -89,14 +89,19 @@ namespace Assets._01_Basic_ShadowMap.Helper
             texDepth.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
             texDepth.Apply();
             RenderTexture.active = null;
-            var png = texDepth.EncodeToPNG();
-            string path = AssetDatabase.GetAssetPath(renderTexture) + ".png";
-            System.IO.File.WriteAllBytes(path, png);
-            AssetDatabase.ImportAsset(path);
-            Debug.Log("Saved to " + path);
+            SaveTexture2DToLacalPng(texDepth,"CaptureDepth");
             //Texture2D texDepth2 = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.RGBA32, false, true);
             //texDepth2.LoadImage(png);
             return texDepth;
+        }
+
+        public static void SaveTexture2DToLacalPng(Texture2D tex,string pngName)
+        {
+            var png = tex.EncodeToPNG();
+            string path = Application.dataPath + "/Save/" + pngName + ".png";
+            System.IO.File.WriteAllBytes(path, png);
+            AssetDatabase.ImportAsset(path);
+            Debug.Log("Saved to " + path);
         }
     }
 }
