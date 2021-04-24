@@ -2,7 +2,7 @@
 	return pos - basePos;
 }
 
-inline float4 GetPixel(int id, sampler2D tex, int width, int height) {
+inline float4 GetPixel(int id, sampler2D tex, uint width, uint height) {
 	float u = (id / width) / (float)width;
 	float v = (id % width) / (float)width;
 	return tex2D(tex, float2(u, v));
