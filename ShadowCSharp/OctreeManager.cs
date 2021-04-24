@@ -70,7 +70,7 @@ namespace Assets.ShadowCSharp
             _shadowDatas = new List<DebugShadowData>();
         }
 
-        private float GetSizeByDepth(int depth)
+        public float GetSizeByDepth(int depth)
         {
             return _aabbManager.GetAABBLenth() / (long) (1 << depth);
         }
@@ -207,14 +207,18 @@ namespace Assets.ShadowCSharp
 
         public Texture2D SerializeOctree()
         {
-            Texture2D tex = new Texture2D(1024, 1024);
+            Texture2D tex = new Texture2D(128, 128);
             int lastIp = -1;
             SerializationDfs(_root, tex,ref lastIp,0);
             Debug.LogFormat("Total ip = {0}",lastIp);
+            for (int i = lastIp + 1; i < tex.width * tex.height; ++i)
+            {
+                SetPixel(i,tex,new Color32(0,0,0,0));
+            }
             return tex;
         }
 
-        private const int black = Int32.MaxValue;
+        private const int black = 1;
         private const int white = 0;
 
         private int SerializationDfs(Octree root, Texture2D tex,ref int lastIp,int preAllocatedId)
@@ -236,15 +240,17 @@ namespace Assets.ShadowCSharp
             if (BitCompression(root, out TryCompressValue))
             {
                 SetPixel(root.Ip,tex,EncodeIntRGBA(TryCompressValue,1));
+                Debug.LogFormat("{0}: [{1},type = {2}]", root.Ip, TryCompressValue, 1);
                 return root.Ip;
             }
 
             int tmpIp = lastIp + 1;
             lastIp += 8;
 
-            SetPixel(root.Ip, tex, EncodeIntRGBA(SerializationDfs(root.SubTree[0], tex, ref lastIp, tmpIp), 
-                (root.SubTree == null || root.SubTree.Count <= 0) ? 0 : 2));
-
+            int val = SerializationDfs(root.SubTree[0], tex, ref lastIp, tmpIp);
+            int type = (root.SubTree == null || root.SubTree.Count <= 0) ? 0 : 2;
+            SetPixel(root.Ip, tex, EncodeIntRGBA(val, type));
+            Debug.LogFormat("{0}: [{1},type = {2}]",root.Ip,val,type);
             for (int i = 1; i < 8; ++i)
             {
                SerializationDfs(root.SubTree[i],tex,ref lastIp,tmpIp+i);

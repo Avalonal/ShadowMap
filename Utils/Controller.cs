@@ -47,12 +47,14 @@ class Controller : MonoBehaviour
         Execute();
         GC.Collect();
         Texture2D tex = octreeManager.SerializeOctree();
+        CommonValues.SaveTexture2DToLacalPng(tex,"OctreeInShader");
+
         Shader.SetGlobalTexture("_Octree",tex);
         Shader.SetGlobalInt("_TreeDepth",depth);
         Shader.SetGlobalVector("_AABBMin",aabbManager.BasePoint);
         Shader.SetGlobalInt("_TexWidth",tex.width);
         Shader.SetGlobalInt("_TexHeight",tex.height);
-        CommonValues.SaveTexture2DToLacalPng(tex, "Octree-preCompress");
+        Shader.SetGlobalFloat("_AABBCell", octreeManager.GetSizeByDepth(depth));
     }
 
     private void Execute()
