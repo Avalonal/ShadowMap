@@ -12,11 +12,11 @@ namespace Assets.ShadowCSharp
             Ip = -1;
         }
 
-        public Octree(bool shadow,int ip = -1)
+        public Octree(bool shadow)
         {
             InShadow = shadow;
             SubTree = null;
-            Ip = ip;
+            Ip = -1;
         }
 
         public bool InShadow { get; set; }

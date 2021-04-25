@@ -21,8 +21,8 @@ namespace Assets.ShadowCSharp
         private List<int> _primeList;
         private const int mod = (int) 1e9 + 7;
 
-        private Octree inshadowTree = new Octree(true,0);
-        private Octree outshadowTree = new Octree(false,1);
+        private Octree _inShadowNode = new Octree(true);
+        private Octree _outShadowNode = new Octree(false);
 
         public OctreeManager(AABBManager aabbManager, int depth, List<int> hashCode)
         {
@@ -125,7 +125,7 @@ namespace Assets.ShadowCSharp
                 //Debug.Log(pos);
                 root.SubTree.Clear();
                 root.InShadow = (CommonValues.GetShadowState(pos) < 0.3f);
-                root = root.InShadow ? inshadowTree : outshadowTree;
+                root = root.InShadow ? _inShadowNode : _outShadowNode;
 
                 //return root;
                 return new KeyValuePair<int, int>(0,root.InShadow?1 : 0);
@@ -168,7 +168,7 @@ namespace Assets.ShadowCSharp
             {
                 root.SubTree.Clear();
 
-                root = root.InShadow ? inshadowTree : outshadowTree;
+                root = root.InShadow ? _inShadowNode : _outShadowNode;
 
                 return new KeyValuePair<int, int>(0, root.InShadow ? 1 : 0);
             }
@@ -208,9 +208,9 @@ namespace Assets.ShadowCSharp
         public Texture2D SerializeOctree()
         {
             Texture2D tex = new Texture2D(128, 128);
-            int lastIp = -1;
+            int lastIp = 0;
             SerializationDfs(_root, tex,ref lastIp,0);
-            Debug.LogFormat("Total ip = {0}",lastIp);
+            Debug.LogFormat("Total ip = {0}",lastIp+1);
             for (int i = lastIp + 1; i < tex.width * tex.height; ++i)
             {
                 SetPixel(i,tex,new Color32(0,0,0,0));
@@ -225,7 +225,10 @@ namespace Assets.ShadowCSharp
         {
             if (root.SubTree == null || root.SubTree.Count <= 0)
             {
-                return root.InShadow ? black : white;
+                root.Ip = preAllocatedId;
+                SetPixel(root.Ip, tex, EncodeIntRGBA(root.InShadow ? black : white, 0));
+                Debug.LogFormat("{0} is {1}",root.Ip,root.InShadow);
+                return root.Ip;
             }
             if (root.Ip >= 0)
             {
@@ -240,7 +243,16 @@ namespace Assets.ShadowCSharp
             if (BitCompression(root, out TryCompressValue))
             {
                 SetPixel(root.Ip,tex,EncodeIntRGBA(TryCompressValue,1));
-                Debug.LogFormat("{0}: [{1},type = {2}]", root.Ip, TryCompressValue, 1);
+                Debug.LogFormat("{0}: [{1}{2}{3}{4}{5}{6}{7}{8},type = {9}]", root.Ip,
+                    ((TryCompressValue >> 7) & 1),
+                    ((TryCompressValue >> 6) & 1),
+                    ((TryCompressValue >> 5) & 1),
+                    ((TryCompressValue >> 4) & 1),
+                    ((TryCompressValue >> 3) & 1),
+                    ((TryCompressValue >> 2) & 1),
+                    ((TryCompressValue >> 1) & 1),
+                    ((TryCompressValue >> 0) & 1),
+                    1);
                 return root.Ip;
             }
 
@@ -296,9 +308,9 @@ namespace Assets.ShadowCSharp
         private Color32 EncodeIntRGBA(int val,int type)
         {
             var bytes = BitConverter.GetBytes(val);
-            bytes[0] = (byte) ((bytes[0] & 0x3f) + (byte)(type << 6));
-            Color32 col = new Color32 {r = bytes[0], g = bytes[1], b = bytes[2], a = bytes[3]};
-
+            bytes[3] = (byte) ((bytes[3] & 0x3f) + (byte)(type << 6));
+            Color32 col = new Color32 {r = bytes[3], g = bytes[2], b = bytes[1], a = bytes[0]};
+            Debug.LogErrorFormat("{0} == [{1}=>{2}]",type,val,col);
             return col;
         }
 
