@@ -310,7 +310,7 @@ namespace Assets.ShadowCSharp
             var bytes = BitConverter.GetBytes(val);
             bytes[3] = (byte) ((bytes[3] & 0x3f) + (byte)(type << 6));
             Color32 col = new Color32 {r = bytes[3], g = bytes[2], b = bytes[1], a = bytes[0]};
-            Debug.LogErrorFormat("{0} == [{1}=>{2}]",type,val,col);
+            //Debug.LogErrorFormat("{0} == [{1}=>{2}]",type,val,col);
             return col;
         }
 

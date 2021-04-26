@@ -55,6 +55,7 @@ class Controller : MonoBehaviour
         Shader.SetGlobalInt("_TexWidth",tex.width);
         Shader.SetGlobalInt("_TexHeight",tex.height);
         Shader.SetGlobalFloat("_AABBCell", octreeManager.GetSizeByDepth(depth));
+        Debug.Log(octreeManager.GetSizeByDepth(depth) +","+ octreeManager.GetSizeByDepth(0));
     }
 
     private void Execute()
