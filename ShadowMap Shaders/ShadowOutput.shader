@@ -3,16 +3,15 @@
 		_Color ("Color", Color) = (1,1,1,1)
 	}
 	SubShader {
-		Tags { "RenderType"="Opaque" }
+		Tags{ "RenderType" = "Opaque" }
 		LOD 200
-	
+
 		CGPROGRAM
 
 		#include "Assets/ShadowMap Shaders/Octree.cginc"
-		// Physically based Standard lighting model, and enable shadows on all light types
+
 		#pragma surface surf Standard fullforwardshadows
 
-		// Use shader model 3.0 target, to get nicer looking lighting
 		#pragma target 3.0
 
 		struct Input {
@@ -21,7 +20,7 @@
 
 		sampler2D _Octree;
 		
-		float4 _Color;
+		fixed4 _Color;
 		int _TreeDepth;
 		float4 _AABBMin;
 		int _TexWidth;
@@ -41,5 +40,4 @@
 
 		ENDCG
 	}
-	FallBack "Diffuse"
 }

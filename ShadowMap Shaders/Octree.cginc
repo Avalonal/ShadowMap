@@ -28,17 +28,17 @@ inline void GetNearByPosInAABB(float3 pos,float cell, out int x, out int y, out 
 inline float GetShadow(float3 pos,sampler2D octree,int depth,int width,int height,float cell) {
 	
 	int tmpIp = 0;
-
 	int x = 0, y = 0, z = 0;
-	GetNearByPosInAABB(pos, cell, x, y, z);
-	if (x == 0 || y == 0 || z == 0) return 0.0f;
-	
-	[unroll(10)]
-	for (int i = depth-1; i >= 0; --i) {
+	GetNearByPosInAABB(pos, cell,x,y,z);
+
+	//[unroll(10)]
+	for (int i = depth-1; i >= 0; i--) {
 		int id = (((x >> i) & 1) << 2) + (((y >> i) & 1) << 1) + ((z >> i) & 1);
 
 		int type = 0;
-		int val = DecodeIntRGBA(GetPixel(tmpIp, octree, width, height), type);
+		float4 col = GetPixel(tmpIp, octree, width, height);
+		int val = DecodeIntRGBA(col,type);
+
 		if (type == 0) {
 			//return 0;
 			return val;
@@ -53,6 +53,7 @@ inline float GetShadow(float3 pos,sampler2D octree,int depth,int width,int heigh
 		}
 	}
 	int type = 0;
-	return DecodeIntRGBA(GetPixel(tmpIp, octree, width, height), type);
+	float4 col = GetPixel(tmpIp, octree, width, height);
+	return DecodeIntRGBA(col , type);
 }
 
