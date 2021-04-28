@@ -9,10 +9,10 @@ inline float4 GetPixel(int id, sampler2D tex, uint width, uint height) {
 }
 
 inline int DecodeIntRGBA(float4 col, out int type) {
-	int x = (int)(col.x * 255 );
-	int y = (int)(col.y * 255 );
-	int z = (int)(col.z * 255 );
-	int w = (int)(col.w * 255 );
+	uint x = (int)(col.x * 255 );
+	uint y = (int)(col.y * 255 );
+	uint z = (int)(col.z * 255 );
+	uint w = (int)(col.w * 255 );
 	type = x / 64;
 	x -= type * 64;
     int val = x * 16777216 + y * 65536 + z * 256 + w;

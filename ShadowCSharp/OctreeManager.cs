@@ -277,7 +277,6 @@ namespace Assets.ShadowCSharp
                 val = 0;
                 return false;
             }
-            bool flag = true;
             val = 0;
             for (int i = 0; i < 8; ++i)
             {
