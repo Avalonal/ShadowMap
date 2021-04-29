@@ -19,6 +19,8 @@
 		};
 
 		sampler2D _Octree;
+
+		uniform float4 _MainTex_TexelSize;
 		
 		fixed4 _Color;
 		int _TreeDepth;

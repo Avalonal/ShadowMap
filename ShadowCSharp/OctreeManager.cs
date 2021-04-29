@@ -205,28 +205,30 @@ namespace Assets.ShadowCSharp
             return worldPos;
         }
 
-        public Texture2D SerializeOctree()
+        public Texture2D SerializeOctree(out List<Color> list)
         {
-            Texture2D tex = new Texture2D(128, 128);
+            Texture2D tex = new Texture2D(5, 5);
+            list = new List<Color>(tex.width * tex.height);
             int lastIp = 0;
-            SerializationDfs(_root, tex,ref lastIp,0);
+            SerializationDfs(_root, tex,list,ref lastIp,0);
             Debug.LogFormat("Total ip = {0}",lastIp+1);
-            for (int i = lastIp + 1; i < tex.width * tex.height; ++i)
+            for (int i = 0; i < tex.width * tex.height; ++i)
             {
-                SetPixel(i,tex,new Color32(0,0,0,0));
+                SetPixel(i,tex, list, new Color32(192,255,0,255));
             }
+            
             return tex;
         }
 
         private const int black = 1;
         private const int white = 0;
 
-        private int SerializationDfs(Octree root, Texture2D tex,ref int lastIp,int preAllocatedId)
+        private int SerializationDfs(Octree root, Texture2D tex, List<Color> list,ref int lastIp,int preAllocatedId)
         {
             if (root.SubTree == null || root.SubTree.Count <= 0)
             {
                 root.Ip = preAllocatedId;
-                SetPixel(root.Ip, tex, EncodeIntRGBA(root.InShadow ? black : white, 0));
+                SetPixel(root.Ip, tex,list, EncodeIntRGBA(root.InShadow ? black : white, 0));
                 Debug.LogFormat("{0} is {1}",root.Ip,root.InShadow);
                 return root.Ip;
             }
@@ -234,7 +236,9 @@ namespace Assets.ShadowCSharp
             {
                 Color32 col;
                 GetPixel(root.Ip, tex,out col);
-                return DecodeIntRGBA(col);
+                SetPixel(preAllocatedId,tex, list, col);
+                Debug.LogFormat("{0} Used this block => {1}",preAllocatedId,col);
+                return preAllocatedId;
             }
 
             root.Ip = preAllocatedId;
@@ -242,7 +246,7 @@ namespace Assets.ShadowCSharp
             int TryCompressValue;
             if (BitCompression(root, out TryCompressValue))
             {
-                SetPixel(root.Ip,tex,EncodeIntRGBA(TryCompressValue,1));
+                SetPixel(root.Ip,tex, list, EncodeIntRGBA(TryCompressValue,1));
                 Debug.LogFormat("{0}: [{1}{2}{3}{4}{5}{6}{7}{8},type = {9}]", root.Ip,
                     ((TryCompressValue >> 7) & 1),
                     ((TryCompressValue >> 6) & 1),
@@ -259,13 +263,13 @@ namespace Assets.ShadowCSharp
             int tmpIp = lastIp + 1;
             lastIp += 8;
 
-            int val = SerializationDfs(root.SubTree[0], tex, ref lastIp, tmpIp);
+            int val = SerializationDfs(root.SubTree[0], tex,list, ref lastIp, tmpIp);
             int type = (root.SubTree == null || root.SubTree.Count <= 0) ? 0 : 2;
-            SetPixel(root.Ip, tex, EncodeIntRGBA(val, type));
+            SetPixel(root.Ip, tex, list, EncodeIntRGBA(val, type));
             Debug.LogFormat("{0}: [{1},type = {2}]",root.Ip,val,type);
             for (int i = 1; i < 8; ++i)
             {
-               SerializationDfs(root.SubTree[i],tex,ref lastIp,tmpIp+i);
+               SerializationDfs(root.SubTree[i],tex,list,ref lastIp,tmpIp+i);
             }
             return root.Ip;
         }
@@ -294,9 +298,10 @@ namespace Assets.ShadowCSharp
 
         //private bool BitCompressionDouble(Octree root,out int val1,out int val2)
 
-        private void SetPixel(int id, Texture2D tex,Color32 col)
+        private void SetPixel(int id, Texture2D tex,List<Color> list,Color32 col)
         {
             tex.SetPixel(id / tex.width, id % tex.width,col);
+            list[id] = col;
         }
 
         private void GetPixel(int id, Texture2D tex, out Color32 col)
@@ -316,10 +321,10 @@ namespace Assets.ShadowCSharp
         private int DecodeIntRGBA(Color32 col)
         {
             byte[] bytes = new byte[4];
-            bytes[0] = col.r;
-            bytes[1] = col.g;
-            bytes[2] = col.b;
-            bytes[3] = col.a; 
+            bytes[3] = col.r;
+            bytes[2] = col.g;
+            bytes[1] = col.b;
+            bytes[0] = col.a; 
 
             return BitConverter.ToInt32(bytes,0);
         }

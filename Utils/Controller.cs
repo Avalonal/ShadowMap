@@ -27,6 +27,9 @@ class Controller : MonoBehaviour
     private List<DebugShadowData> list;
     private Octree root;
 
+    public Texture2D octreeTexture;
+    public Material octreeMaterial;
+
     void Start()
     {
         Init();
@@ -46,15 +49,22 @@ class Controller : MonoBehaviour
         GC.Collect();
         Execute();
         GC.Collect();
-        Texture2D tex = octreeManager.SerializeOctree();
+        List<Color> list;
+        Texture2D tex = octreeManager.SerializeOctree(out list);
         CommonValues.SaveTexture2DToLacalPng(tex,"OctreeInShader");
+        tex.wrapMode = TextureWrapMode.Clamp;
+        tex.filterMode = FilterMode.Point;
+        octreeTexture = tex;
+        octreeMaterial.SetVector("_AABBMin", aabbManager.BasePoint);
 
-        Shader.SetGlobalTexture("_Octree",tex);
-        Shader.SetGlobalInt("_TreeDepth",depth);
-        Shader.SetGlobalVector("_AABBMin",aabbManager.BasePoint);
-        Shader.SetGlobalInt("_TexWidth",tex.width);
-        Shader.SetGlobalInt("_TexHeight",tex.height);
-        Shader.SetGlobalFloat("_AABBCell", octreeManager.GetSizeByDepth(depth));
+        octreeMaterial.SetTexture("_Octree",tex);
+        octreeMaterial.SetInt("_TreeDepth",depth);
+        //Shader.SetGlobalVector("_AABBMin",aabbManager.BasePoint);
+        octreeMaterial.SetInt("_TexWidth",tex.width);
+        octreeMaterial.SetInt("_TexHeight",tex.height);
+        octreeMaterial.SetFloat("_AABBCell", octreeManager.GetSizeByDepth(depth));
+
+        octreeMaterial.SetColorArray();
         Debug.Log(octreeManager.GetSizeByDepth(depth) +","+ octreeManager.GetSizeByDepth(0));
     }
 
