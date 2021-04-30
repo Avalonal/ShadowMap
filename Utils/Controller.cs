@@ -4,6 +4,7 @@ using Assets.ShadowCSharp;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Random = UnityEngine.Random;
 
@@ -49,23 +50,44 @@ class Controller : MonoBehaviour
         GC.Collect();
         Execute();
         GC.Collect();
-        List<Color> list;
-        Texture2D tex = octreeManager.SerializeOctree(out list);
+
+        int bufferSize = 0;
+        Texture2D tex = octreeManager.SerializeOctree(out bufferSize);
         CommonValues.SaveTexture2DToLacalPng(tex,"OctreeInShader");
         tex.wrapMode = TextureWrapMode.Clamp;
         tex.filterMode = FilterMode.Point;
         octreeTexture = tex;
         octreeMaterial.SetVector("_AABBMin", aabbManager.BasePoint);
 
-        octreeMaterial.SetTexture("_Octree",tex);
+        //octreeMaterial.SetTexture("_Octree",tex);
         octreeMaterial.SetInt("_TreeDepth",depth);
         //Shader.SetGlobalVector("_AABBMin",aabbManager.BasePoint);
-        octreeMaterial.SetInt("_TexWidth",tex.width);
-        octreeMaterial.SetInt("_TexHeight",tex.height);
+        //octreeMaterial.SetInt("_TexWidth",tex.width);
+        //octreeMaterial.SetInt("_TexHeight",tex.height);
         octreeMaterial.SetFloat("_AABBCell", octreeManager.GetSizeByDepth(depth));
 
-        octreeMaterial.SetColorArray();
+        GenerateBufferForShader(octreeMaterial,tex,bufferSize);
+
         Debug.Log(octreeManager.GetSizeByDepth(depth) +","+ octreeManager.GetSizeByDepth(0));
+    }
+
+    private void GenerateBufferForShader(Material mat, Texture2D tex,int lenth)
+    {
+        var colors = tex.GetPixels32();
+        int bytesPerInt = 4;
+        int IntInCustomAttribute = 4;
+        int structSize = bytesPerInt * IntInCustomAttribute;
+        ComputeBuffer cb = new ComputeBuffer(lenth, structSize);
+        /*byte[,] values = new byte[lenth, IntInCustomAttribute];
+        for (int i = 0; i < lenth; ++i)
+        {
+            values[i, 0] = colors[i].r;
+            values[i, 1] = colors[i].g;
+            values[i, 2] = colors[i].b;
+            values[i, 3] = colors[i].a;
+        }*/
+        cb.SetData(colors);
+        mat.SetBuffer("_OctreeBuffer",cb);
     }
 
     private void Execute()
