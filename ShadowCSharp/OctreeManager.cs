@@ -116,6 +116,8 @@ namespace Assets.ShadowCSharp
             }
         }
 
+        
+
         private KeyValuePair<int, int> Build(int tmpDep, out Octree root)
         {
             root = new Octree();
@@ -124,7 +126,7 @@ namespace Assets.ShadowCSharp
                 Vector3 pos = GetWorldPositionByStack();
                 //Debug.Log(pos);
                 root.SubTree.Clear();
-                root.InShadow = (CommonValues.GetShadowState(pos) < 0.3f);
+                root.InShadow = (CommonValues.GetShadowState(pos) < 0.1f);
                 root = root.InShadow ? _inShadowNode : _outShadowNode;
 
                 //return root;
@@ -143,11 +145,11 @@ namespace Assets.ShadowCSharp
                 Octree subTree;
                 var subVal = Build(tmpDep - 1, out subTree);
                 root.SubTree.Add(subTree);
-                bool isCull = false;
-                if (subTree.InShadow)
-                {
-                    isCull = Physics.CheckSphere(pos, GetSizeByDepth(stk.Count) * 0.49f);
-                }
+                //bool isCull = false;
+                //if (subTree.InShadow)
+                //{
+                //    isCull = Physics.CheckBox(pos, Vector3.one * GetSizeByDepth(stk.Count)*0.5f);
+                //}
 
                 hashval = (hashval + _hashCode[i] * _primeList[subVal.Key] % mod * subVal.Value % mod) % mod;
                 sz += subVal.Key;
@@ -158,7 +160,7 @@ namespace Assets.ShadowCSharp
                     if (root.SubTree[i].SubTree != null && root.SubTree[i].SubTree.Count > 0) flag = false;
                     if (i == 0)
                         root.InShadow = root.SubTree[i].InShadow;
-                    else if (isCull) continue;
+                    //else if (isCull) continue;
                     else if (root.InShadow != root.SubTree[i].InShadow)
                         flag = false;
                 }
@@ -205,13 +207,19 @@ namespace Assets.ShadowCSharp
             return worldPos;
         }
 
-        public Texture2D SerializeOctree(out int size)
+        public Texture2D SerializeOctree(out int size,out List<Color32> list)
         {
-            Texture2D tex = new Texture2D(5, 5);
-            
+            Texture2D tex = new Texture2D(1024, 1024);
+            list = new List<Color32>();
             int lastIp = 0;
             SerializationDfs(_root, tex,ref lastIp,0);
             Debug.LogFormat("Total ip = {0}",lastIp+1);
+            for (int i = 0; i <= lastIp; ++i)
+            {
+                Color32 col;
+                GetPixel(i, tex, out col);
+                list.Add(col);
+            }
             for (int i = lastIp+1; i < tex.width * tex.height; ++i)
             {
                 SetPixel(i,tex, new Color32(192,255,0,255));
@@ -230,7 +238,6 @@ namespace Assets.ShadowCSharp
             {
                 root.Ip = preAllocatedId;
                 SetPixel(root.Ip, tex, EncodeIntRGBA(root.InShadow ? black : white, 0));
-                Debug.LogFormat("{0} is {1}",root.Ip,root.InShadow);
                 return root.Ip;
             }
             if (root.Ip >= 0)
@@ -238,7 +245,6 @@ namespace Assets.ShadowCSharp
                 Color32 col;
                 GetPixel(root.Ip, tex,out col);
                 SetPixel(preAllocatedId,tex, col);
-                Debug.LogFormat("{0} Used this block => {1}",preAllocatedId,col);
                 return preAllocatedId;
             }
 
@@ -248,16 +254,6 @@ namespace Assets.ShadowCSharp
             if (BitCompression(root, out TryCompressValue))
             {
                 SetPixel(root.Ip,tex, EncodeIntRGBA(TryCompressValue,1));
-                Debug.LogFormat("{0}: [{1}{2}{3}{4}{5}{6}{7}{8},type = {9}]", root.Ip,
-                    ((TryCompressValue >> 7) & 1),
-                    ((TryCompressValue >> 6) & 1),
-                    ((TryCompressValue >> 5) & 1),
-                    ((TryCompressValue >> 4) & 1),
-                    ((TryCompressValue >> 3) & 1),
-                    ((TryCompressValue >> 2) & 1),
-                    ((TryCompressValue >> 1) & 1),
-                    ((TryCompressValue >> 0) & 1),
-                    1);
                 return root.Ip;
             }
 
@@ -267,7 +263,6 @@ namespace Assets.ShadowCSharp
             int val = SerializationDfs(root.SubTree[0], tex, ref lastIp, tmpIp);
             int type = (root.SubTree == null || root.SubTree.Count <= 0) ? 0 : 2;
             SetPixel(root.Ip, tex, EncodeIntRGBA(val, type));
-            Debug.LogFormat("{0}: [{1},type = {2}]",root.Ip,val,type);
             for (int i = 1; i < 8; ++i)
             {
                SerializationDfs(root.SubTree[i],tex,ref lastIp,tmpIp+i);

@@ -12,11 +12,11 @@
 
 		#pragma surface surf Standard fullforwardshadows
 
-		#pragma target 3.0
+		#pragma target 3.5
 
 		struct Node
 		{
-			int4 val;
+			uint value;
 		};
 		#ifdef SHADER_API_D3D11
 			StructuredBuffer<Node> _OctreeBuffer;
@@ -35,48 +35,117 @@
 		//int _TexHeight;
 		float _AABBCell;
 
-		float GetShadow(float3 pos, int depth, float cell) {
 
-			int tmpIp = 0;
-			uint x = 0, y = 0, z = 0;
-			GetNearByPosInAABB(pos, cell, x, y, z);
+		inline float GetShadow(int3 nearpos, int depth)
+		{
 
-			//[unroll(10)]
-			for (int i = depth - 1; i >= 0; --i) {
-				int id = (((x >> i) & 1) << 2) + (((y >> i) & 1) << 1) + ((z >> i) & 1);
+			uint tmpIp = 0;
 
-				int type = 0;
-				int4 value = _OctreeBuffer[tmpIp].value;
-				int val = DecodeNode(value,type);
+			uint length = (1 << depth);
+			if (nearpos.x < 0 || nearpos.x >= length ||
+						nearpos.y < 0 || nearpos.y >= length ||
+						nearpos.z < 0 || nearpos.z >= length)
+				return 0;
+			
+					//return	float3( (float)nearpos.x/(float)(length-1),
+					//				(float)nearpos.y/(float)(length-1),
+					//				(float)nearpos.z/(float)(length-1));
+					//找所在网格正确
 
-				if (type == 0) {
-					//return 0;
-					return val == 0 ? 0f : 1f;
+
+					//[unroll(10)]
+			for (uint i = depth - 1; i >= 0; --i)
+			{
+				uint id = (((nearpos.x >> i) & 1) << 2) + (((nearpos.y >> i) & 1) << 1) + ((nearpos.z >> i) & 1);
+				uint type = 3;
+		#ifdef SHADER_API_D3D11
+				uint value = _OctreeBuffer[tmpIp].value;
+				uint val = DecodeNode(value,type);
+		#else
+				uint val = -1;
+		#endif
+
+						//switch(id){
+						//		case 0:
+						//		return float3(0,0,0);
+						//		case 1:
+						//		return float3(0,0,1);
+						//		case 2:
+						//		return float3(0,1,0);
+						//		case 3:
+						//		return float3(0,1,1);
+						//		case 4:
+						//		return float3(1,0,0);
+						//		case 5:
+						//		return float3(1,0,1);
+						//		case 6:
+						//		return float3(1,1,0);
+						//		case 7:
+						//		return float3(1,1,1);
+						//}
+						//return float3(0,0.5f,0);
+						//找id索引正确
+				
+
+						//if(type==0) return float3(0,1,0);
+						//else if(type==2) return float3(0,0,1);
+						//else if(type==1){
+						//	if(val == 3)
+						//		return float3(1,1,0);
+						//	else
+						//		return float3(1,0,1);
+						//}
+						//else return float3(1,0,0);
+						//buffer内数据正常
+
+
+				if (type == 0)
+				{
+					if (val == 0) 
+						return 1;
+					else
+						return 0;
 				}
-				else if (type == 1) {
-					return ((val >> id) & 1) == 0 ? 0f : 1f;
+				else if (type == 1)
+				{
+					uint inShadow = ((val >> id) & 1);
+					if (inShadow == 0)
+						return 1;
+					else
+						return 0;
 				}
-				else if (type == 2) {
-					tmpIp = val+id;
-					//return 0;
-					continue;
+				else if (type == 2)
+				{
+					tmpIp = val + id;
 				}
-				else return 0;
+				else
+					return 0.5;
 			}
-			int type = 0;
-			int4 value = _OctreeBuffer[tmpIp].value;
-			int val = DecodeNode(value, type);
-			return val == 0 ? 0f : 1f;
+
+			return 0;
 		}
 
-		float GetShadowAtten(float3 worldPos) {
-			float3 aabbPos = GetAABBPostion(worldPos, _AABBMin.xyz);
-			return GetShadow(aabbPos, _TreeDepth, _AABBCell);
+
+		inline float GetShadowWithPCF(int3 pos,int depth,int size){
+			float tot = 0;
+			int num = 0;
+
+			for (int i = -size; i <= size; ++i)
+			for (int j = -size; j <= size; ++j)
+			for (int k = -size; k <= size; ++k){
+				++num;
+				int3 newpos = int3(pos.x+i,pos.y+j,pos.z+k);
+				tot += GetShadow(newpos,depth);
+			}
+			tot /= (float)num;
+			return tot;
 		}
 
 
 		void surf(Input IN, inout SurfaceOutputStandard o) {
-			o.Albedo = _Color * GetShadowAtten(IN.worldPos);
+			float3 aabbPos = GetAABBPostion(IN.worldPos, _AABBMin.xyz);
+			int3 nearpos = GetNearByPosInAABB(aabbPos, _AABBCell);
+			o.Albedo = _Color * GetShadowWithPCF(nearpos, _TreeDepth,1);
 			o.Alpha = 1;
 		}
 

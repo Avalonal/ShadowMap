@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using Random = UnityEngine.Random;
 
@@ -45,14 +46,14 @@ class Controller : MonoBehaviour
             lightController.Init();
         }
         InitSystem();
-
         StartCoroutine(octreeManager.TrueBuildTree());
         GC.Collect();
         Execute();
         GC.Collect();
 
         int bufferSize = 0;
-        Texture2D tex = octreeManager.SerializeOctree(out bufferSize);
+        List<Color32> list;
+        Texture2D tex = octreeManager.SerializeOctree(out bufferSize,out list);
         CommonValues.SaveTexture2DToLacalPng(tex,"OctreeInShader");
         tex.wrapMode = TextureWrapMode.Clamp;
         tex.filterMode = FilterMode.Point;
@@ -66,27 +67,32 @@ class Controller : MonoBehaviour
         //octreeMaterial.SetInt("_TexHeight",tex.height);
         octreeMaterial.SetFloat("_AABBCell", octreeManager.GetSizeByDepth(depth));
 
-        GenerateBufferForShader(octreeMaterial,tex,bufferSize);
+        GenerateBufferForShader(octreeMaterial,tex,bufferSize,list);
 
-        Debug.Log(octreeManager.GetSizeByDepth(depth) +","+ octreeManager.GetSizeByDepth(0));
+        StringBuilder st = new StringBuilder();
+        st.AppendFormat("AABB min = {0}\n", octreeMaterial.GetVector("_AABBMin"));
+        st.AppendFormat("depth = {0}\n", octreeMaterial.GetInt("_TreeDepth"));
+        st.AppendFormat("cell = {0}\n", octreeMaterial.GetFloat("_AABBCell"));
+
+        Debug.Log(st.ToString());
     }
 
-    private void GenerateBufferForShader(Material mat, Texture2D tex,int lenth)
+    private void GenerateBufferForShader(Material mat, Texture2D tex,int lenth,List<Color32> colors)
     {
-        var colors = tex.GetPixels32();
-        int bytesPerInt = 4;
-        int IntInCustomAttribute = 4;
-        int structSize = bytesPerInt * IntInCustomAttribute;
+        int bytesInUint = 4;
+        int UintInCustomAttribute = 1;
+        int structSize = bytesInUint * UintInCustomAttribute;
         ComputeBuffer cb = new ComputeBuffer(lenth, structSize);
-        /*byte[,] values = new byte[lenth, IntInCustomAttribute];
+        uint[] values = new uint[lenth];
         for (int i = 0; i < lenth; ++i)
         {
-            values[i, 0] = colors[i].r;
-            values[i, 1] = colors[i].g;
-            values[i, 2] = colors[i].b;
-            values[i, 3] = colors[i].a;
-        }*/
-        cb.SetData(colors);
+            uint x = colors[i].r;
+            uint y = colors[i].g;
+            uint z = colors[i].b;
+            uint w = colors[i].a;
+            values[i] = 16777216 * x + 65536 * y + 256 * z + w;
+        }
+        cb.SetData(values);
         mat.SetBuffer("_OctreeBuffer",cb);
     }
 
@@ -125,7 +131,7 @@ class Controller : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        if(list==null) return;
+        if(list==null||!debugToggle) return;
         foreach (var item in list)
         {
             var pos = item.pos;

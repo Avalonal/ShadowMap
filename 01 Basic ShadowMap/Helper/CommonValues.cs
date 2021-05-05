@@ -19,10 +19,10 @@ namespace Assets._01_Basic_ShadowMap.Helper
         {
             Vector3 posInLight = new Vector3();
             float depth = GetDepth(pos, lightProjection, shadowDepthMap, out posInLight);
-            float strength = GetShadowAttenuate(posInLight, shadowDepthMap, bias, pixelWidth, pixelHeight);
+            //float strength = GetShadowAttenuate(posInLight, shadowDepthMap, bias, pixelWidth, pixelHeight);
             //Debug.LogFormat("{0}=>{1}", posInLight.z,depth);
-            //return posInLight.z <= depth ? 0.0f : 1.0f;
-            return strength;
+            return posInLight.z - bias <= depth ? 0.0f : 1.0f;
+            //return strength;
         }
 
         public static void Init()
