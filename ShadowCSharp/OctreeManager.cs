@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 
 namespace Assets.ShadowCSharp
 {
-    class OctreeManager
+    partial class OctreeManager
     {
         private int _depth;
         private AABBManager _aabbManager;
@@ -34,12 +34,6 @@ namespace Assets.ShadowCSharp
    
             InitHashSystem();
             Initializer();
-
-            /*Texture2D tex = new Texture2D(2, 2);
-            Color32 col = EncodeIntRGBA(Int32.MaxValue);
-            SetPixel(0,tex,col);
-            col = tex.GetPixel(0, 0);
-            Debug.LogFormat("{0} => {1}",Int32.MaxValue,DecodeIntRGBA(col));*/
         }
 
         private void InitHashSystem()
@@ -79,7 +73,8 @@ namespace Assets.ShadowCSharp
         {
             if (_root == null)
             {
-                Build(_depth, out _root);
+                //Build(_depth, out _root);
+                _root = BuildTree(_depth);
             }
             Debug.Log("Dic size = " + _dic.Count);
         }
@@ -141,7 +136,6 @@ namespace Assets.ShadowCSharp
             for (int i = 0; i < 8; ++i)
             {
                 stk.Add(i);
-                var pos = GetWorldPositionByStack();
                 Octree subTree;
                 var subVal = Build(tmpDep - 1, out subTree);
                 root.SubTree.Add(subTree);
