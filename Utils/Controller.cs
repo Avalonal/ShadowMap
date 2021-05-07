@@ -59,12 +59,7 @@ class Controller : MonoBehaviour
         tex.filterMode = FilterMode.Point;
         octreeTexture = tex;
         octreeMaterial.SetVector("_AABBMin", aabbManager.BasePoint);
-
-        //octreeMaterial.SetTexture("_Octree",tex);
         octreeMaterial.SetInt("_TreeDepth",depth);
-        //Shader.SetGlobalVector("_AABBMin",aabbManager.BasePoint);
-        //octreeMaterial.SetInt("_TexWidth",tex.width);
-        //octreeMaterial.SetInt("_TexHeight",tex.height);
         octreeMaterial.SetFloat("_AABBCell", octreeManager.GetSizeByDepth(depth));
 
         GenerateBufferForShader(octreeMaterial,tex,bufferSize,list);

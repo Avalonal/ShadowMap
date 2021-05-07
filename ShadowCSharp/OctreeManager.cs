@@ -77,6 +77,7 @@ namespace Assets.ShadowCSharp
                 _root = BuildTree(_depth);
             }
             Debug.Log("Dic size = " + _dic.Count);
+            Debug.Log("Reuse num = " + hashCnt);
         }
 
         public IEnumerator TrueBuildTree()
@@ -112,7 +113,7 @@ namespace Assets.ShadowCSharp
         }
 
         
-
+        //递归版本建树，爆栈，废弃
         private KeyValuePair<int, int> Build(int tmpDep, out Octree root)
         {
             root = new Octree();

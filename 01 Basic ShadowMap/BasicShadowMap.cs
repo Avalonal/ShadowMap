@@ -79,6 +79,8 @@ public class BasicShadowMap : MonoBehaviour
         camera.clearFlags = CameraClearFlags.Color;
         camera.backgroundColor = Color.black;
         camera.orthographic = true;
+        camera.nearClipPlane = 0;
+        camera.farClipPlane = 10000;
 
         camera.enabled = false;
 

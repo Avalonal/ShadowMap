@@ -42,20 +42,19 @@ namespace Assets.ShadowCSharp
     partial class OctreeManager
     {
         private Stack<Data> dataStack = new Stack<Data>();
+        private int hashCnt;
 
         public Octree BuildTree(int depth)
         {
             stk.Clear();
-            Data last;
+            hashCnt = 0;
+            Data last = null;
             Data tree = new Data(new Octree(), depth, true, 1, 0, 0);
             dataStack.Push(tree);
-            last = null;
             while (dataStack.Count > 0)
             {
 
                 Data top = dataStack.Pop();
-                //Debug.Log(top.ToString());
-
                 switch (top.step)
                 {
                     case 0:
@@ -91,6 +90,24 @@ namespace Assets.ShadowCSharp
                         var i = top.childId;
                         KeyValuePair<int, int> subVal = new KeyValuePair<int, int>(last.sz, last.hashval);
                         top.root.SubTree.Add(subTree);
+                        bool isCull = false;
+                        var subPos = GetWorldPositionByStack();
+                        if (subTree.InShadow)
+                        {
+                            var length = GetSizeByDepth(stk.Count);
+                            var colliders = Physics.OverlapBox(subPos, Vector3.one * 0.49f * length);
+                            foreach (var col in colliders)
+                            {
+                                var closestPoint = col.ClosestPoint(subPos);
+                                if (closestPoint != subPos)
+                                {
+                                    isCull = true;
+                                    Debug.Log("cull " + subPos);
+                                    break;
+                                }
+                            }
+                        }
+
                         var hashval = top.hashval;
                         top.hashval = (hashval + _hashCode[top.childId] * _primeList[subVal.Key] % mod * subVal.Value % mod) % mod;
                         top.sz += subVal.Key;
@@ -100,11 +117,12 @@ namespace Assets.ShadowCSharp
                             if (top.root.SubTree[i].SubTree != null && top.root.SubTree[i].SubTree.Count > 0) top.flag = false;
                             if (i == 0)
                                 top.root.InShadow = top.root.SubTree[i].InShadow;
-                            //else if (isCull) continue;
+                            else if (isCull) continue;
                             else if (top.root.InShadow != top.root.SubTree[i].InShadow)
                                 top.flag = false;
                         }
 
+                        if (top.root.InShadow) isCull = false;
                         if (top.childId >= 7)
                         {
                             top.step = 3;
@@ -117,7 +135,7 @@ namespace Assets.ShadowCSharp
                         dataStack.Push(top);
                         break;
                     case 3:
-                        if (top.flag)
+                        if (top.flag && !top.root.InShadow)
                         {
                             top.root.SubTree.Clear();
 
@@ -133,13 +151,17 @@ namespace Assets.ShadowCSharp
                         dataStack.Push(top);
                         break;
                     case 4:
-                        if (_dic.ContainsKey(top.hashval)) top.root = _dic[top.hashval];
+                        if (_dic.ContainsKey(top.hashval))
+                        {
+                            top.root = _dic[top.hashval];
+                            hashCnt += top.sz;
+                        }
                         else _dic.Add(top.hashval, top.root);
                         last = top;
                         break;
                 }
             }
-
+            GC.Collect();
             return last.root;
         }
     }
