@@ -74,7 +74,7 @@ namespace Assets.ShadowCSharp
             if (_root == null)
             {
                 //Build(_depth, out _root);
-                _root = BuildTree(_depth);
+                BuildTree(_depth,out _root);
             }
             Debug.Log("Dic size = " + _dic.Count);
             Debug.Log("Reuse num = " + hashCnt);
@@ -204,7 +204,7 @@ namespace Assets.ShadowCSharp
 
         public Texture2D SerializeOctree(out int size,out List<Color32> list)
         {
-            Texture2D tex = new Texture2D(1024, 1024);
+            Texture2D tex = new Texture2D(4096, 4096);
             list = new List<Color32>();
             int lastIp = 0;
             SerializationDfs(_root, tex,ref lastIp,0);

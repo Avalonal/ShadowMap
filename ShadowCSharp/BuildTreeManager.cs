@@ -44,12 +44,13 @@ namespace Assets.ShadowCSharp
         private Stack<Data> dataStack = new Stack<Data>();
         private int hashCnt;
 
-        public Octree BuildTree(int depth)
+        public void BuildTree(int depth,out Octree allroot)
         {
             stk.Clear();
             hashCnt = 0;
             Data last = null;
-            Data tree = new Data(new Octree(), depth, true, 1, 0, 0);
+            allroot = new Octree();
+            Data tree = new Data(allroot, depth, true, 1, 0, 0);
             dataStack.Push(tree);
             while (dataStack.Count > 0)
             {
@@ -78,6 +79,8 @@ namespace Assets.ShadowCSharp
                         break;
                     case 1:
                         //开始循环
+                        if(top.childId >= 8 ) 
+                            Debug.Log("Error!!!!!!!!");
                         stk.Add(top.childId);
                         top.step = 2;
                         dataStack.Push(top);
@@ -90,23 +93,13 @@ namespace Assets.ShadowCSharp
                         var i = top.childId;
                         KeyValuePair<int, int> subVal = new KeyValuePair<int, int>(last.sz, last.hashval);
                         top.root.SubTree.Add(subTree);
-                        bool isCull = false;
-                        var subPos = GetWorldPositionByStack();
-                        if (subTree.InShadow)
-                        {
-                            var length = GetSizeByDepth(stk.Count);
-                            var colliders = Physics.OverlapBox(subPos, Vector3.one * 0.49f * length);
-                            foreach (var col in colliders)
-                            {
-                                var closestPoint = col.ClosestPoint(subPos);
-                                if (closestPoint != subPos)
-                                {
-                                    isCull = true;
-                                    Debug.Log("cull " + subPos);
-                                    break;
-                                }
-                            }
-                        }
+                        //bool isCull = false;
+                        //var subPos = GetWorldPositionByStack();
+                        //if (subTree.InShadow)
+                        //{
+                        //    var length = GetSizeByDepth(stk.Count);
+                        //    isCull = Physics.CheckBox(subPos, Vector3.one * 0.5f * length);
+                        //}
 
                         var hashval = top.hashval;
                         top.hashval = (hashval + _hashCode[top.childId] * _primeList[subVal.Key] % mod * subVal.Value % mod) % mod;
@@ -117,12 +110,11 @@ namespace Assets.ShadowCSharp
                             if (top.root.SubTree[i].SubTree != null && top.root.SubTree[i].SubTree.Count > 0) top.flag = false;
                             if (i == 0)
                                 top.root.InShadow = top.root.SubTree[i].InShadow;
-                            else if (isCull) continue;
+                            //else if (isCull) continue;
                             else if (top.root.InShadow != top.root.SubTree[i].InShadow)
                                 top.flag = false;
                         }
 
-                        if (top.root.InShadow) isCull = false;
                         if (top.childId >= 7)
                         {
                             top.step = 3;
@@ -135,7 +127,7 @@ namespace Assets.ShadowCSharp
                         dataStack.Push(top);
                         break;
                     case 3:
-                        if (top.flag && !top.root.InShadow)
+                        if (top.flag)
                         {
                             top.root.SubTree.Clear();
 
@@ -161,8 +153,6 @@ namespace Assets.ShadowCSharp
                         break;
                 }
             }
-            GC.Collect();
-            return last.root;
         }
     }
 }

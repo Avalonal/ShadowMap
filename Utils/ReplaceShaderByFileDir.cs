@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿/*
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
@@ -68,7 +69,7 @@ public class ReplaceShaderByFileDir : EditorWindow
     {
         replaceGoList.Clear();
 
-        /*Dictionary<GameObject, Material[]> matDict =*/ GetAllScenceMaterial();
+        /*Dictionary<GameObject, Material[]> matDict =#1# GetAllScenceMaterial();
 
         /*List<Material> replaceMatList = new List<Material>();
         foreach (var item in matDict)
@@ -98,12 +99,12 @@ public class ReplaceShaderByFileDir : EditorWindow
             UpdateProgress(i, replaceMatCount, "替换中...");
             replaceMatList[i] = material;
             EditorUtility.SetDirty(replaceMatList[i]);
-        }*/
+        }#1#
 
         AssetDatabase.Refresh();
         AssetDatabase.SaveAssets();
         /*tipMsg = "替换成功！替换了" + replaceMatCount + "个Material," + replaceGoList.Count + "个GameObject";
-        tipMsgType = MessageType.Info;*/
+        tipMsgType = MessageType.Info;#1#
 
         EditorUtility.ClearProgressBar();
     }
@@ -171,3 +172,4 @@ public class ReplaceShaderByFileDir : EditorWindow
 
 
 }
+*/
