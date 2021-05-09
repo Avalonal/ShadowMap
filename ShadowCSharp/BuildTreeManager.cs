@@ -39,9 +39,74 @@ namespace Assets.ShadowCSharp
         }
     }
 
+    class MyStack
+    {
+        private List<Data> _list;
+        private int length = 0;
+
+        public MyStack()
+        {
+            length = 0;
+            _list = new List<Data>();
+        }
+
+        public void Push(Data data)
+        {
+            if (_list.Count > length)
+                _list[length] = data;
+            else
+                _list.Add(data);
+            ++length;
+        }
+
+        public void Push(Octree Root, int Depth, bool Flag, int Size, int Hashval, int ChildId, int Step = 0)
+        {
+            if (_list.Count > length)
+            {
+                _list[length].root = Root;
+                _list[length].depth = Depth;
+                _list[length].flag = Flag;
+                _list[length].sz = Size;
+                _list[length].hashval = Hashval;
+                _list[length].childId = ChildId;
+                _list[length].step = Step;
+            }
+            else
+            {
+                _list.Add(new Data(Root,Depth,Flag,Size,Hashval,ChildId,Step));
+            }
+
+            ++length;
+        }
+
+        public Data Pop()
+        {
+            if (length == 0)
+            {
+                Debug.LogError("No Data");
+                return null;
+            }
+
+            --length;
+            return _list[length];
+        }
+
+        public void Clear()
+        {
+            _list.Clear();
+            length = 0;
+        }
+
+        public int Count
+        {
+            get { return length; }
+        }
+    }
+
     partial class OctreeManager
     {
-        private Stack<Data> dataStack = new Stack<Data>();
+        private MyStack dataStack = new MyStack();
+
         private int hashCnt;
 
         public void BuildTree(int depth,out Octree allroot)
@@ -102,7 +167,7 @@ namespace Assets.ShadowCSharp
                         //}
 
                         var hashval = top.hashval;
-                        top.hashval = (hashval + _hashCode[top.childId] * _primeList[subVal.Key] % mod * subVal.Value % mod) % mod;
+                        top.hashval = (hashval + _hashCode[top.childId] * _primeList[subVal.Key%hashMax] % mod * subVal.Value % mod) % mod;
                         top.sz += subVal.Key;
                         stk.RemoveAt(stk.Count - 1);
                         if (top.flag)
@@ -153,6 +218,7 @@ namespace Assets.ShadowCSharp
                         break;
                 }
             }
+            dataStack.Clear();
         }
     }
 }

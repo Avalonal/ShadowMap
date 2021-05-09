@@ -20,6 +20,7 @@ namespace Assets.ShadowCSharp
         private Dictionary<int, Octree> _dic;
         private List<int> _primeList;
         private const int mod = (int) 1e9 + 7;
+        private int hashMax;
 
         private Octree _inShadowNode = new Octree(true);
         private Octree _outShadowNode = new Octree(false);
@@ -38,7 +39,7 @@ namespace Assets.ShadowCSharp
 
         private void InitHashSystem()
         {
-            int N = (int) 1e5;
+            int N = (int)1e5;
             _dic = new Dictionary<int, Octree>();
             _primeList = new List<int>();
             bool[] vis = new bool[N];
@@ -56,6 +57,8 @@ namespace Assets.ShadowCSharp
                     if (i % _primeList[j] == 0) break;
                 }
             }
+
+            hashMax = _primeList.Count;
         }
 
         private void Initializer()
