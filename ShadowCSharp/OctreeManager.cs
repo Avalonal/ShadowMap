@@ -25,6 +25,8 @@ namespace Assets.ShadowCSharp
         private Octree _inShadowNode = new Octree(true);
         private Octree _outShadowNode = new Octree(false);
 
+        public static Color32 fillingColor = new Color32(192, 255, 0, 255);
+
         public OctreeManager(AABBManager aabbManager, int depth, List<int> hashCode)
         {
             _depth = depth;
@@ -207,7 +209,7 @@ namespace Assets.ShadowCSharp
 
         public Texture2D SerializeOctree(out int size,out List<Color32> list)
         {
-            Texture2D tex = new Texture2D(4096, 4096);
+            Texture2D tex = new Texture2D(8192, 8192);
             list = new List<Color32>();
             int lastIp = 0;
             SerializationDfs(_root, tex,ref lastIp,0);
@@ -220,7 +222,7 @@ namespace Assets.ShadowCSharp
             }
             for (int i = lastIp+1; i < tex.width * tex.height; ++i)
             {
-                SetPixel(i,tex, new Color32(192,255,0,255));
+                SetPixel(i,tex, fillingColor);
             }
 
             size = lastIp + 1;
@@ -297,7 +299,7 @@ namespace Assets.ShadowCSharp
             tex.SetPixel(id / tex.width, id % tex.width,col);
         }
 
-        private void GetPixel(int id, Texture2D tex, out Color32 col)
+        public static void GetPixel(int id, Texture2D tex, out Color32 col)
         {
             col = tex.GetPixel(id / tex.width, id % tex.width);
         }

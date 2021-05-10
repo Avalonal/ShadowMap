@@ -20,6 +20,7 @@ class Controller : MonoBehaviour
     public int depth = 1;
 
     public bool debugToggle = false;
+    public bool loadFromLocal = false;
 
     public AABBManager aabbManager;
     public List<Color> colors = new List<Color> { Color.green, Color.blue, Color.red, Color.yellow, Color.black, Color.cyan };
@@ -31,36 +32,61 @@ class Controller : MonoBehaviour
 
     public Texture2D octreeTexture;
     public Material octreeMaterial;
+    public Texture2D tex;
 
     void Start()
     {
         Init();
+        //CheckTexture();
     }
 
     private void Init()
     {
         InitVariable();
-        if (sceneLight != null)
-        {
-            var lightController = sceneLight.GetComponent<BasicShadowMap>();
-            lightController.Init();
-        }
-        InitSystem();
-        StartCoroutine(octreeManager.TrueBuildTree());
-        GC.Collect();
-        Execute();
-        GC.Collect();
 
         int bufferSize = 0;
         List<Color32> list;
-        Texture2D tex = octreeManager.SerializeOctree(out bufferSize,out list);
-        CommonValues.SaveTexture2DToLacalPng(tex,"OctreeInShader");
+        aabbManager = new AABBManager(sceneAABB);
+
+
+        if (loadFromLocal)
+        {
+            tex = LoadLocalTexture("OctreeInShader");
+            list = new List<Color32>();
+            for (int i = 0; i < tex.width * tex.height; ++i)
+            {
+                Color32 col;
+                OctreeManager.GetPixel(i, tex, out col);
+                if(CommonValues.ColorEqual(col,OctreeManager.fillingColor)) break;
+                list.Add(col);
+            }
+
+            bufferSize = list.Count;
+            Debug.Log("Buffer Size = " + bufferSize);
+        }
+        else
+        {
+            if (sceneLight != null)
+            {
+                var lightController = sceneLight.GetComponent<BasicShadowMap>();
+                lightController.Init();
+            }
+            InitSystem();
+            StartCoroutine(octreeManager.TrueBuildTree());
+            GC.Collect();
+            Execute();
+            GC.Collect();
+            tex = octreeManager.SerializeOctree(out bufferSize, out list);
+            CommonValues.SaveTexture2DToLacalPng(tex, "OctreeInShader");
+        }
+        
         tex.wrapMode = TextureWrapMode.Clamp;
         tex.filterMode = FilterMode.Point;
         octreeTexture = tex;
         octreeMaterial.SetVector("_AABBMin", aabbManager.BasePoint);
         octreeMaterial.SetInt("_TreeDepth",depth);
-        octreeMaterial.SetFloat("_AABBCell", octreeManager.GetSizeByDepth(depth));
+        var cell = aabbManager.GetAABBLenth() / (long) (1 << depth);
+        octreeMaterial.SetFloat("_AABBCell", cell);
 
         GenerateBufferForShader(octreeMaterial,tex,bufferSize,list);
 
@@ -114,7 +140,6 @@ class Controller : MonoBehaviour
     private void InitSystem()
     {
         CommonValues.Init();
-        aabbManager = new AABBManager(sceneAABB);
         octreeManager = new OctreeManager(aabbManager, depth, hashCode);
     }
 
@@ -144,5 +169,43 @@ class Controller : MonoBehaviour
     {
         return colors[(depth-dep) % colors.Count];
     }
+
+    private Texture2D LoadLocalTexture(string pngName)
+    {
+        string path = Application.dataPath + "/Resources/" + pngName + ".png";
+        var tex = Resources.Load(pngName) as Texture2D;
+        if (tex == null)
+        {
+            Debug.LogError("Can't find " + pngName);
+        }
+        return tex;
+    }
+
+    private void CheckTexture()
+    {
+        StringBuilder str = new StringBuilder();
+        for (int i = 0; i < tex.width * tex.height; ++i)
+        {
+            Color32 col;
+            OctreeManager.GetPixel(i, tex, out col);
+            if (CommonValues.ColorEqual(col, OctreeManager.fillingColor)) break;
+            str.AppendFormat(i + " => " + col + "\n");
+        }
+        Debug.Log(str.ToString());
+        CommonValues.SaveTexture2DToLacalPng(tex,"check");
+    }
 }
+
+//0 => RGBA(128, 0, 0, 1)
+//1 => RGBA(0, 0, 0, 0)
+//2 => RGBA(0, 0, 0, 0)
+//3 => RGBA(0, 0, 0, 0)
+//4 => RGBA(0, 0, 0, 0)
+//5 => RGBA(64, 0, 0, 51)
+//6 => RGBA(64, 0, 0, 2)
+//7 => RGBA(0, 0, 0, 0)
+//8 => RGBA(0, 0, 0, 0)
+
+
+
 

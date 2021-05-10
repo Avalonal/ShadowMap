@@ -98,10 +98,15 @@ namespace Assets._01_Basic_ShadowMap.Helper
         public static void SaveTexture2DToLacalPng(Texture2D tex,string pngName)
         {
             var png = tex.EncodeToPNG();
-            string path = Application.dataPath + "/Save/" + pngName + ".png";
+            string path = Application.dataPath + "/Resources/" + pngName + ".png";
             System.IO.File.WriteAllBytes(path, png);
             AssetDatabase.ImportAsset(path);
             Debug.Log("Saved to " + path);
+        }
+
+        public static bool ColorEqual(Color32 colA, Color32 colB)
+        {
+            return colA.r == colB.r && colA.g == colB.g && colA.b == colB.b && colA.a == colB.a;
         }
     }
 }
