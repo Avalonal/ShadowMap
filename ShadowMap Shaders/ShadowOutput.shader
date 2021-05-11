@@ -129,14 +129,15 @@
 		inline float GetShadowWithPCF(int3 pos,int depth,int size){
 			float tot = GetShadow(pos, depth) * 1;
 			int num = 1;
+			bool flag = false;
 
 			for (int i = -size; i <= size; ++i)
 			for (int j = -size; j <= size; ++j)
 			for (int k = -size; k <= size; ++k){
 				if (i == 0 && j == 0 && k == 0) continue;
-				++num;
 				int3 newpos = int3(pos.x+i,pos.y+j,pos.z+k);
-				tot += GetShadow(newpos,depth);
+				float tmp = GetShadow(newpos,depth);
+				if (tmp == 1) { flag = true; tot += tmp; ++num; }
 			}
 			tot /= (float)num;
 			return tot;
@@ -146,7 +147,7 @@
 		void surf(Input IN, inout SurfaceOutputStandard o) {
 			float3 aabbPos = GetAABBPostion(IN.worldPos, _AABBMin.xyz);
 			int3 nearpos = GetNearByPosInAABB(aabbPos, _AABBCell);
-			o.Albedo = _Color * GetShadowWithPCF(nearpos, _TreeDepth,1);
+			o.Albedo = _Color * GetShadowWithPCF(nearpos, _TreeDepth,2);
 			o.Alpha = 1;
 		}
 
