@@ -137,7 +137,9 @@
 				if (i == 0 && j == 0 && k == 0) continue;
 				int3 newpos = int3(pos.x+i,pos.y+j,pos.z+k);
 				float tmp = GetShadow(newpos,depth);
-				if (tmp == 1) { flag = true; tot += tmp; ++num; }
+				//if (tmp == 1) { flag = true; tot += tmp; ++num; }
+				tot += tmp;
+				++num;
 			}
 			tot /= (float)num;
 			return tot;
@@ -147,7 +149,7 @@
 		void surf(Input IN, inout SurfaceOutputStandard o) {
 			float3 aabbPos = GetAABBPostion(IN.worldPos, _AABBMin.xyz);
 			int3 nearpos = GetNearByPosInAABB(aabbPos, _AABBCell);
-			o.Albedo = _Color * GetShadowWithPCF(nearpos, _TreeDepth,2);
+			o.Albedo = _Color * GetShadowWithPCF(nearpos, _TreeDepth,0);
 			o.Alpha = 1;
 		}
 
