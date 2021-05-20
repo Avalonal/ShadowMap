@@ -106,8 +106,12 @@ namespace Assets.ShadowCSharp
     partial class OctreeManager
     {
         private MyStack dataStack = new MyStack();
-
+        //private Stack<Data> dataStack = new Stack<Data>();
         private int hashCnt;
+
+        private int mergeCnt = 0;
+        private int physicsMergeCnt = 0;
+        private int leavesCnt = 0;
 
         public void BuildTree(int depth,out Octree allroot)
         {
@@ -133,8 +137,9 @@ namespace Assets.ShadowCSharp
                             top.root.InShadow = (CommonValues.GetShadowState(pos) < 0.1f);
                             top.root = top.root.InShadow ? _inShadowNode : _outShadowNode;
 
-                            top.sz = 0;
+                            top.sz = 1;
                             top.hashval = top.root.InShadow ? 1 : 0;
+                            ++leavesCnt;
                             last = top;
                             break;
                         }
@@ -198,9 +203,11 @@ namespace Assets.ShadowCSharp
 
                             top.root = top.root.InShadow ? _inShadowNode : _outShadowNode;
 
-                            top.sz = 0;
+                            top.sz = 1;
                             top.hashval = top.root.InShadow ? 1 : 0;
                             last = top;
+
+                            mergeCnt += 8; 
                             break;
                         }
 
@@ -218,6 +225,7 @@ namespace Assets.ShadowCSharp
                         break;
                 }
             }
+            Debug.Log("try get : " + last.sz);
             dataStack.Clear();
         }
     }

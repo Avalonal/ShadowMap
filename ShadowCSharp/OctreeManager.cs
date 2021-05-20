@@ -2,8 +2,10 @@
 using System.Collections;
 using Assets._01_Basic_ShadowMap.Helper;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 using Random = UnityEngine.Random;
 
 namespace Assets.ShadowCSharp
@@ -76,13 +78,25 @@ namespace Assets.ShadowCSharp
 
         public void BuildTree()
         {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            //耗时程序
             if (_root == null)
             {
                 //Build(_depth, out _root);
                 BuildTree(_depth,out _root);
             }
             Debug.Log("Dic size = " + _dic.Count);
-            Debug.Log("Reuse num = " + hashCnt);
+            Debug.Log("Hash reuse num = " + hashCnt);
+            Debug.Log("mergeSize = " + mergeCnt);
+            Debug.Log("LeavesCnt = " + leavesCnt);
+            var tot = ((int) Mathf.Pow(8, _depth + 1) - 1) / 7;
+            Debug.Log("merge% = " + (float)mergeCnt/(float)tot);
+
+            sw.Stop();
+            TimeSpan ts = sw.Elapsed;
+            Debug.LogFormat("DateTime costed for Shuffle function is: {0}ms", ts.TotalMilliseconds);
+            Debug.Log("hash% = " + ((float)hashCnt/(float)(tot-mergeCnt)));
         }
 
         public IEnumerator TrueBuildTree()
@@ -175,7 +189,7 @@ namespace Assets.ShadowCSharp
                 return new KeyValuePair<int, int>(0, root.InShadow ? 1 : 0);
             }
 
-            if (_dic.ContainsKey(hashval)) root = _dic[hashval];
+            if (_dic.ContainsKey(hashval)) {root = _dic[hashval];}
             else _dic.Add(hashval,root);
 
             return new KeyValuePair<int, int>(sz,hashval);

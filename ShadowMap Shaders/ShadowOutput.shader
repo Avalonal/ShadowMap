@@ -149,7 +149,7 @@
 		void surf(Input IN, inout SurfaceOutputStandard o) {
 			float3 aabbPos = GetAABBPostion(IN.worldPos, _AABBMin.xyz);
 			int3 nearpos = GetNearByPosInAABB(aabbPos, _AABBCell);
-			o.Albedo = _Color * GetShadowWithPCF(nearpos, _TreeDepth,0);
+			o.Albedo = _Color * GetShadowWithPCF(nearpos, _TreeDepth,2);
 			o.Alpha = 1;
 		}
 
